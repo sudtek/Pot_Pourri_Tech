@@ -1,0 +1,210 @@
+# 12 novembre 2023 
+# Hardware : Ordianteur Raspberry PI 4 / RPI4
+# Os : RASPIAN bulleyes 64 bits
+# Device : Module camera noname sur bus CSI
+
+# But : Résoudre la mauvaise détection d'une camera noname (non officielle de la RPI fondation) sur un RPI4B.
+
+# Par defaut les cameras officielles de la fondation RPI sont automatiquement detectées par le RPI4 sous RASPIAN
+# Si vous utilisez une camera officielle ce tutorial ne devrait pas vous concerner. 
+# Si pour une question de budget et/ou technique vous souhaitez utiliser une camera noname premier prix vous risquez de vous heurter 
+# à une mauvaise detection et configuration automatique de la camera.
+# Dans mon cas je voulais utiliser un module camera noname acheté sur Aliexpress https://fr.aliexpress.com/item/1005003242447408.html
+# 5MP, OV5647, 70°, M12, chipset  sony 6€ alias OV5647 appellée V1 camera 
+
+# Note : Tous les modules et directives pour les camera CSI compatibles RPI sont disponibles à cette adresse : https://www.raspberrypi.com/documentation/computers/camera_software.html
+
+# Attention si on active l'autodection de la camera via la commande raspi-config cette camera V1 OV5647 est mal detectée et/ou configurée dans Raspian et n'est pas utilisable. 
+
+# Il faut IMPERATIVEMENT rajouter les directives suivantes dans votre fichier "config.txt"
+
+[pi4]
+#dtoverlay=imx477 # camera CSI aliexpresss testé et fonctionel avec une ov467 mais probablement pas optimal voir documentation https://www.raspberrypi.com/documentation/computers/camera_software.html
+dtoverlay=ov5647 # Le bon  pour V1 https://fr.aliexpress.com/item/1005003242447408.html
+camera_auto_detect=1 
+
+------------------------
+
+# Note : D'apres certains utilisateurs il semble aussi necessaire d'avoir les directives ci-dessous dans le fichier config.txt
+# Pour memoire config.txt est situé dans la partion #1 label boot format fat32) 
+# Celles-ci sont normalement inscrite par defaut dans le fichier. 
+# 
+
+[all]
+gpu_mem=128
+
+# Automatically load overlays for detected cameras
+start_x=1
+
+# Uncomment some or all of these to enable the optional hardware interfaces
+dtparam=i2c_arm=on
+
+------------------------
+
+# Annexes Liste de commandes utiles pour tester la bonne configuration de votre camera : 
+
+$ v4l2-ctl --list-devices
+
+bcm2835-codec-decode (platform:bcm2835-codec):
+	/dev/video10
+	/dev/video11
+	/dev/video12
+	/dev/video18
+	/dev/video31
+	/dev/media3
+
+bcm2835-isp (platform:bcm2835-isp):
+	/dev/video13
+	/dev/video14
+	/dev/video15
+	/dev/video16
+	/dev/video20
+	/dev/video21
+	/dev/video22
+	/dev/video23
+	/dev/media2
+	/dev/media4
+
+unicam (platform:fe801000.csi):
+	/dev/video0
+	/dev/media1
+
+rpivid (platform:rpivid):
+	/dev/video19
+	/dev/media0
+
+
+
+$ vcgencmd get_camera
+supported=1 detected=0, libcamera interfaces=1
+
+v4l2-compliance
+Driver Info:
+	Driver name      : unicam
+	Card type        : unicam
+	Bus info         : platform:fe801000.csi
+	Driver version   : 6.1.21
+	Capabilities     : 0xa5a00001
+		Video Capture
+		Metadata Capture
+		Read/Write
+		Streaming
+		Extended Pix Format
+		Device Capabilities
+	Device Caps      : 0x25200001
+		Video Capture
+		Read/Write
+		Streaming
+		Extended Pix Format
+Media Driver Info:
+	Driver name      : unicam
+	Model            : unicam
+	Serial           : 
+	Bus info         : platform:fe801000.csi
+	Media version    : 6.1.21
+	Hardware revision: 0x00000000 (0)
+	Driver version   : 6.1.21
+Interface Info:
+	ID               : 0x03000005
+	Type             : V4L Video
+Entity Info:
+	ID               : 0x00000003 (3)
+	Name             : unicam-image
+	Function         : V4L2 I/O
+	Flags         : default
+	Pad 0x01000004   : 0: Sink
+	  Link 0x02000007: from remote pad 0x1000002 of entity 'ov5647 10-0036': Data, Enabled, Immutable
+
+Required ioctls:
+	test MC information (see 'Media Driver Info' above): OK
+	test VIDIOC_QUERYCAP: OK
+
+Allow for multiple opens:
+	test second /dev/video0 open: OK
+	test VIDIOC_QUERYCAP: OK
+	test VIDIOC_G/S_PRIORITY: OK
+	test for unlimited opens: OK
+
+	test invalid ioctls: OK
+Debug ioctls:
+	test VIDIOC_DBG_G/S_REGISTER: OK (Not Supported)
+	test VIDIOC_LOG_STATUS: OK
+
+Input ioctls:
+	test VIDIOC_G/S_TUNER/ENUM_FREQ_BANDS: OK (Not Supported)
+	test VIDIOC_G/S_FREQUENCY: OK (Not Supported)
+	test VIDIOC_S_HW_FREQ_SEEK: OK (Not Supported)
+	test VIDIOC_ENUMAUDIO: OK (Not Supported)
+	test VIDIOC_G/S/ENUMINPUT: OK
+	test VIDIOC_G/S_AUDIO: OK (Not Supported)
+	Inputs: 1 Audio Inputs: 0 Tuners: 0
+
+Output ioctls:
+	test VIDIOC_G/S_MODULATOR: OK (Not Supported)
+	test VIDIOC_G/S_FREQUENCY: OK (Not Supported)
+	test VIDIOC_ENUMAUDOUT: OK (Not Supported)
+	test VIDIOC_G/S/ENUMOUTPUT: OK (Not Supported)
+	test VIDIOC_G/S_AUDOUT: OK (Not Supported)
+	Outputs: 0 Audio Outputs: 0 Modulators: 0
+
+Input/Output configuration ioctls:
+	test VIDIOC_ENUM/G/S/QUERY_STD: OK (Not Supported)
+	test VIDIOC_ENUM/G/S/QUERY_DV_TIMINGS: OK (Not Supported)
+	test VIDIOC_DV_TIMINGS_CAP: OK (Not Supported)
+	test VIDIOC_G/S_EDID: OK (Not Supported)
+
+Control ioctls (Input 0):
+	test VIDIOC_QUERY_EXT_CTRL/QUERYMENU: OK (Not Supported)
+	test VIDIOC_QUERYCTRL: OK (Not Supported)
+	test VIDIOC_G/S_CTRL: OK (Not Supported)
+	test VIDIOC_G/S/TRY_EXT_CTRLS: OK (Not Supported)
+	test VIDIOC_(UN)SUBSCRIBE_EVENT/DQEVENT: OK (Not Supported)
+	test VIDIOC_G/S_JPEGCOMP: OK (Not Supported)
+	Standard Controls: 0 Private Controls: 0
+
+Format ioctls (Input 0):
+	test VIDIOC_ENUM_FMT/FRAMESIZES/FRAMEINTERVALS: OK
+	test VIDIOC_G/S_PARM: OK (Not Supported)
+	test VIDIOC_G_FBUF: OK (Not Supported)
+	test VIDIOC_G_FMT: OK
+		G_FMT:     640x480, YUYV, 1, 1280, 614400, 8, 1, 2, feedcafe
+		TRY/S_FMT: 640x480, YUYV, 1, 1280, 614400, 1, 1, 2, feedcafe
+		fail: v4l2-test-formats.cpp(722): Video Capture: TRY_FMT(G_FMT) != G_FMT
+	test VIDIOC_TRY_FMT: FAIL
+		G_FMT:     640x480, YUYV, 1, 1280, 614400, 8, 1, 2, feedcafe
+		TRY/S_FMT: 640x480, YUYV, 1, 1280, 614400, 1, 1, 2, feedcafe
+		fail: v4l2-test-formats.cpp(1127): Video Capture: S_FMT(G_FMT) != G_FMT
+	test VIDIOC_S_FMT: FAIL
+	test VIDIOC_G_SLICED_VBI_CAP: OK (Not Supported)
+	test Cropping: OK (Not Supported)
+	test Composing: OK (Not Supported)
+	test Scaling: OK
+
+Codec ioctls (Input 0):
+	test VIDIOC_(TRY_)ENCODER_CMD: OK (Not Supported)
+	test VIDIOC_G_ENC_INDEX: OK (Not Supported)
+	test VIDIOC_(TRY_)DECODER_CMD: OK (Not Supported)
+
+Buffer ioctls (Input 0):
+	test VIDIOC_REQBUFS/CREATE_BUFS/QUERYBUF: OK
+	test VIDIOC_EXPBUF: OK
+	test Requests: OK (Not Supported)
+
+
+
+$ v4l2-ctl -d /dev/video0
+
+# Capture sans sortie de fichier pour regler le zoom est le focus de la camera 
+$ libcamera-hello -t 0
+
+# Capturer une image dasn un fichier de test au format jpg
+raspistill -o test.jpg //pas de commande raspistill implentée
+$ libcamera-jpeg -o test.jpg
+
+# Capturer une video 
+$ libcamera-vid -o video.h264
+
+# Avoir de l'aide 
+$ libcamerify --help
+
+
