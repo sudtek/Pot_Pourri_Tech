@@ -1,5 +1,5 @@
 # 12 novembre 2023 
-# Hardware : Ordianteur Raspberry PI 4 / RPI4
+# Hardware : Ordinateur Raspberry PI 4 / RPI4
 # Os : RASPIAN bulleyes 64 bits
 # Device : Module camera noname sur bus CSI
 
