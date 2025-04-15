@@ -135,3 +135,48 @@ sudo mount -a
 if [ ! -L ~/umbrel/app-data ]; then
   sudo ln -s /mnt/harddrive1/app-data ~/umbrel/app-data
 fi
+```
+Rendez-le exécutable :
+bash
+
+```chmod +x restore_fstab.sh```
+
+Exécutez-le après les mises à jour :
+```bash
+./restore_fstab.sh```
+
+## Étape 5 : Informations sur le réseau
+Vérifiez les interfaces réseau, adresses IP, routes, et DNS :
+
+```bash
+sudo nmcli
+```
+
+Pour plus de détails :
+Appareils : ```nmcli device show```
+
+Connexions : ```nmcli connection show```
+
+Exemple de configuration :
+Interface ens192 : IP 10.10.10.213/24, passerelle 10.10.10.254, DNS 10.10.10.254, 1.1.1.1, 1.0.0.1.
+
+Interface docker0 : IP 172.17.0.1/16.
+
+Emplacement des fichiers et des applications
+Fichiers système : Umbrel OS sur /dev/sda1 (monté sur /).
+
+Données des applications : Par défaut dans ~/umbrel/app-data, déplacé vers le nouveau disque (ex. : /mnt/harddrive1/app-data).
+
+Fichier de configuration : /etc/fstab pour les montages.
+
+Journaux et Docker : Montages bind pour /var/log, /var/lib/docker, etc., dans /etc/fstab.
+
+**Liens communautaires**
+Approfondissez ou résolvez des problèmes avec ces ressources :
+
+- [Guide non officiel pour ajouter du stockage](https://community.umbrel.com/t/unofficial-guide-how-to-add-more-storage/18397)
+
+- [Déplacer les applications vers un disque externe](https://community.umbrel.com/t/how-to-run-umbrel-apps-from-an-external-disk/12787)
+
+Ce tutoriel vous permet d'étendre le stockage d'Umbrel OS, d'optimiser son fonctionnement, et de gérer les mises à jour ou la virtualisation. Sauvegardez régulièrement ~/umbrel/app-data et vérifiez /etc/fstab après les mises à jour.
+
