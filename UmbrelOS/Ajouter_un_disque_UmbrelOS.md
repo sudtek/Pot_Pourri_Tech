@@ -158,16 +158,16 @@ Appareils : ```nmcli device show```
 Connexions : ```nmcli connection show```
 
 Exemple de configuration :
-Interface ens192 : IP 10.10.10.213/24, passerelle 10.10.10.254, DNS 10.10.10.254, 1.1.1.1, 1.0.0.1.
+_Interface ens192 : IP 10.10.10.213/24, passerelle 10.10.10.254, DNS 10.10.10.254, 1.1.1.1, 1.0.0.1._
 
-Interface docker0 : IP 172.17.0.1/16.
+_Interface docker0 : IP 172.17.0.1/16._
 
 Emplacement des fichiers et des applications
 Fichiers système : Umbrel OS sur /dev/sda1 (monté sur /).
 
-Données des applications : Par défaut dans ~/umbrel/app-data, déplacé vers le nouveau disque (ex. : /mnt/harddrive1/app-data).
+Données des applications : Par défaut dans ```~/umbrel/app-data```, déplacé vers le nouveau disque (ex. : ```/mnt/harddrive1/app-data```).
 
-Fichier de configuration : /etc/fstab pour les montages.
+Fichier de configuration : ```/etc/fstab``` pour les montages.
 
 Journaux et Docker : Montages bind pour /var/log, /var/lib/docker, etc., dans /etc/fstab.
 
