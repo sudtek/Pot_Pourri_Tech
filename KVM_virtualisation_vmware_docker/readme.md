@@ -1,5 +1,4 @@
-Installation de Docker Desktop sur Lubuntu 22.04 LTS (VM avec KVM sous
-VMware)
+# Installation de Docker Desktop sur Lubuntu 22.04 LTS (VM avec KVM sous VMware) #
 
 Ce guide explique étape par étape comment installer Docker Desktop sur
 une machine virtuelle (VM) Lubuntu 22.04 LTS utilisant KVM, hébergée sur
@@ -8,7 +7,7 @@ courants, comme les conflits avec Hyper-V, et intègre des mesures de
 sécurité pour protéger les jetons d\'accès personnels (PAT) utilisés
 pour l\'authentification.
 
-Prérequis
+# Prérequis #
 
 - OS Hôte : Windows 10 Professionnel (Build 19045 ou supérieur)
 - Hyperviseur : VMware Workstation 16.1 ou version ultérieure
@@ -30,56 +29,46 @@ Note : Vérifiez que votre CPU supporte la virtualisation imbriquée et
 que celle-ci est activée dans le BIOS. Utilisez vmware -v ou consultez
 les journaux VMware si la VM ne démarre pas.
 
-Étape 1 : Résoudre les conflits Hyper-V sous Windows
+# Étape 1 : Résoudre les conflits Hyper-V sous Windows #
 
 Hyper-V peut bloquer la virtualisation imbriquée nécessaire à KVM.
 Suivez ces étapes pour le désactiver complètement :
 
-1.  Désactiver Hyper-V via l'interface graphique :
+## 1.  Désactiver Hyper-V via l'interface graphique : ##
 
-    - Ouvrez Panneau de configuration \> Programmes et fonctionnalités
-      \> Activer ou désactiver des fonctionnalités Windows.
-    - Décochez toutes les options Hyper-V (y compris \"Plateforme
-      Hyper-V\" et \"Outils de gestion Hyper-V\").
+    - Ouvrez Panneau de configuration -> Programmes et fonctionnalités -> Activer ou désactiver des fonctionnalités Windows.
+      
+    - Décochez toutes les options Hyper-V (y compris "Plateforme Hyper-V" et "Outils de gestion Hyper-V").
+    
     - Cliquez sur OK et redémarrez le système.
 
-2.  Vérifier l'état d'Hyper-V :
+## 2.  Vérifier l'état d'Hyper-V : ##
 
-    - Exécutez systeminfo dans l'Invite de commandes et vérifiez la
-      section \"Exigences Hyper-V\". Elle doit indiquer qu'aucun
-      hyperviseur n'est détecté.
-    - Sinon, ouvrez msinfo32 et assurez-vous que \"Sécurité basée sur la
-      virtualisation\" est Non actif.
+    - Exécutez systeminfo dans l'Invite de commandes et vérifiez la section \"Exigences Hyper-V\". Elle doit indiquer qu'aucun hyperviseur n'est détecté.
+      
+    - Sinon, ouvrez msinfo32 et assurez-vous que \"Sécurité basée sur la virtualisation\" est Non actif.
 
-3.  Désactiver le lancement de l'hyperviseur (CMD en mode
-    administrateur) :
-
-    cmd
+## 3.  Désactiver le lancement de l'hyperviseur (CMD en mode administrateur) : ##   
 
     bcdedit /set hypervisorlaunchtype off
 
-4.  Supprimer les fonctionnalités Hyper-V (PowerShell en mode
-    administrateur) :
+## 4.  Supprimer les fonctionnalités Hyper-V (PowerShell en mode administrateur) : ##
 
     powershell
 
     Disable-WindowsOptionalFeature -Online -FeatureName
-    Microsoft-Hyper-V-All
+    Microsoft-Hyper-V-All```
 
-5.  Redémarrer le système :
+## 5.  Redémarrer le système :
 
     - Redémarrez Windows pour appliquer les modifications.
 
-Dépannage : Si la VM ne démarre toujours pas avec VT-x/AMD-V activé,
-assurez-vous que VMware Workstation est à jour et vérifiez dans le
-fichier .vmx que vhv.enable = \"TRUE\".
+Dépannage : Si la VM ne démarre toujours pas avec VT-x/AMD-V activé, assurez-vous que VMware Workstation est à jour et vérifiez dans le fichier .vmx que vhv.enable = "TRUE".
 
-Étape 2 : Installer et configurer KVM dans la VM Lubuntu
-
-KVM est requis pour que Docker Desktop exécute sa propre VM interne.
+# Étape 2 : Installer et configurer KVM dans la VM Lubuntu KVM est requis pour que Docker Desktop exécute sa propre VM interne. #
 Suivez ces étapes pour l'installer :
 
-1.  Vérifier le support de virtualisation du CPU :
+## 1.  Vérifier le support de virtualisation du CPU : ##
 
     bash
 
@@ -89,14 +78,10 @@ Suivez ces étapes pour l'installer :
 
     kvm-ok
 
-    - Résultat attendu : INFO: /dev/kvm exists et KVM acceleration can
-      be used.
-    - Erreur possible : Si vous voyez Your CPU does not support KVM
-      extensions, Hyper-V est probablement encore actif. Revenez à
-      l'étape 1 ou vérifiez les paramètres de virtualisation CPU dans
-      VMware.
+    - Résultat attendu : INFO: /dev/kvm exists et KVM acceleration can be used.
+    - Erreur possible : Si vous voyez Your CPU does not support KVM extensions, Hyper-V est probablement encore actif. Revenez à l'étape 1 ou vérifiez les paramètres de virtualisation CPU dans VMware.
 
-2.  Installer les modules KVM :
+## 2.  Installer les modules KVM : ##
 
     - Pour les processeurs Intel :
 
@@ -110,39 +95,35 @@ Suivez ces étapes pour l'installer :
 
       sudo modprobe kvm_amd
 
-3.  Vérifier l'installation de KVM :
+## 3.  Vérifier l'installation de KVM : ##
 
     bash
 
     kvm-ok
 
-    lsmod \| grep kvm
+    lsmod | grep kvm
 
     - Cherchez kvm_intel ou kvm_amd dans la sortie de lsmod.
 
-4.  Configurer les permissions utilisateur :
+## 4.  Configurer les permissions utilisateur : ##
 
     bash
 
-    sudo usermod -aG kvm \$USER
+    sudo usermod -aG kvm $USER
 
     ls -al /dev/kvm
+    
+    - Assurez-vous que /dev/kvm existe avec des permissions comme crw-rw----+ 1 root kvm.
+    
+    - Déconnectez-vous et reconnectez-vous pour appliquer les changements de groupe.
 
-    - Assurez-vous que /dev/kvm existe avec des permissions comme
-      crw-rw\-\-\--+ 1 root kvm.
-    - Déconnectez-vous et reconnectez-vous pour appliquer les
-      changements de groupe.
+Dépannage : Si /dev/kvm est absent ou inaccessible, vérifiez si le module kvm est chargé (lsmod | grep kvm). Rechargez le module si nécessaire ou réinstallez qemu-kvm avec sudo apt install qemu-kvm.
 
-Dépannage : Si /dev/kvm est absent ou inaccessible, vérifiez si le
-module kvm est chargé (lsmod \| grep kvm). Rechargez le module si
-nécessaire ou réinstallez qemu-kvm avec sudo apt install qemu-kvm.
+# Étape 3 : Installer Docker Desktop sur Lubuntu #
 
-Étape 3 : Installer Docker Desktop sur Lubuntu
+Docker Desktop nécessite un OS basé sur Ubuntu 64 bits et certaines dépendances. Suivez ces étapes :
 
-Docker Desktop nécessite un OS basé sur Ubuntu 64 bits et certaines
-dépendances. Suivez ces étapes :
-
-1.  Installer les prérequis :
+## 1.  Installer les prérequis : ##
 
     bash
 
@@ -150,38 +131,28 @@ dépendances. Suivez ces étapes :
 
     sudo apt install gnome-terminal
 
-    - gnome-terminal est requis pour les environnements de bureau
-      non-GNOME comme LXQt de Lubuntu.
+    - gnome-terminal est requis pour les environnements de bureau non-GNOME comme LXQt de Lubuntu.
 
-2.  Configurer le dépôt Docker :
+## 2.  Configurer le dépôt Docker : ##
 
     bash
 
     sudo apt install ca-certificates curl gnupg
-
     sudo install -m 0755 -d /etc/apt/keyrings
-
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg \| sudo gpg
-    \--dearmor -o /etc/apt/keyrings/docker.gpg
-
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
     sudo chmod a+r /etc/apt/keyrings/docker.gpg
-
-    echo \"deb \[arch=\$(dpkg \--print-architecture)
-    signed-by=/etc/apt/keyrings/docker.gpg\]
-    https://download.docker.com/linux/ubuntu \$(. /etc/os-release &&
-    echo \"\$VERSION_CODENAME\") stable\" \| sudo tee
-    /etc/apt/sources.list.d/docker.list \> /dev/null
-
+    echo "deb [arch=$(dpkg --print-architecture) igned-by=/etc/apt/keyrings/docker.gpg]
+    https://download.docker.com/linux/ubuntu \$(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee
+    /etc/apt/sources.list.d/docker.list > /dev/null
     sudo apt update
 
-3.  Télécharger et installer Docker Desktop :
+## 3.  Télécharger et installer Docker Desktop : ##
 
     - Téléchargez le dernier paquet .deb (par exemple, version 4.26.1) :
 
       bash
 
-      wget
-      https://desktop.docker.com/linux/main/amd64/docker-desktop-4.26.1-amd64.deb
+      wget https://desktop.docker.com/linux/main/amd64/docker-desktop-4.26.1-amd64.deb
 
     - Installez le paquet :
 
@@ -189,7 +160,7 @@ dépendances. Suivez ces étapes :
 
       sudo apt install ./docker-desktop-4.26.1-amd64.deb
 
-4.  Vérifier l'installation :
+## 4.  Vérifier l'installation : ##
 
     bash
 
@@ -205,104 +176,74 @@ dépendances. Suivez ces étapes :
       - docker-credential-desktop v0.7.0
       - docker-index v0.0.35
 
-5.  Lancer Docker Desktop :
+## 5.  Lancer Docker Desktop : ##
 
     bash
 
-    systemctl \--user start docker-desktop
+    systemctl --user start docker-desktop
 
-    - Alternativement, utilisez le raccourci Docker Desktop dans le menu
-      Programmation.
+    - Alternativement, utilisez le raccourci Docker Desktop dans le menu Programmation.
 
 Dépannage :
 
-- Si Docker Desktop échoue avec une erreur \"KVM virtualization support
-  needed\", revérifiez la configuration de KVM (Étape 2).
-- Si l'installation échoue, assurez-vous que le paquet .deb correspond à
-  l'architecture amd64 et videz le cache APT avec sudo apt clean.
+- Si Docker Desktop échoue avec une erreur "KVM virtualization support needed", revérifiez la configuration de KVM (Étape 2).
+- Si l'installation échoue, assurez-vous que le paquet .deb correspond à l'architecture amd64 et videz le cache APT avec sudo apt clean.
 
-Étape 4 : Configurer l'authentification Docker Desktop
+# Étape 4 : Configurer l'authentification Docker Desktop #
 
-Docker Desktop utilise le fichier \~/.docker/config.json pour
-l'authentification avec Docker Hub ou d'autres registres. Un compte
-Docker Hub gratuit est limité à 5 jetons d'accès personnels (PAT),
-gérez-les avec soin.
+Docker Desktop utilise le fichier \~/.docker/config.json pour l'authentification avec Docker Hub ou d'autres registres. Un compte Docker Hub gratuit est limité à 5 jetons d'accès personnels (PAT), gérez-les avec soin.
 
-Avertissement de sécurité : Si une version précédente de ce tutoriel ou
-un document connexe a inclus un PAT réel, révoquez-le immédiatement via
-[hub.docker.com](https://hub.docker.com/) (Paramètres \> Sécurité \>
-Jetons d'accès personnels) pour éviter tout accès non autorisé à votre
-compte.
+Avertissement de sécurité : Si une version précédente de ce tutoriel ou un document connexe a inclus un PAT réel, révoquez-le immédiatement via [hub.docker.com](https://hub.docker.com/) (Paramètres -> Sécurité -> Jetons d'accès personnels) pour éviter tout accès non autorisé à votre compte.
 
-4.1. Sécurité des jetons d'accès personnels (PAT)
+## 4.1. Sécurité des jetons d'accès personnels (PAT) ##
 
-- Ne partagez jamais vos PAT dans des fichiers publics, dépôts GitHub,
-  ou forums. Une fuite peut compromettre votre compte Docker Hub.
+- Ne partagez jamais vos PAT dans des fichiers publics, dépôts GitHub, ou forums. Une fuite peut compromettre votre compte Docker Hub.
 
-- Si un PAT est exposé, révoquez-le immédiatement via l'interface Docker
-  Hub.
+- Si un PAT est exposé, révoquez-le immédiatement via l'interface Docker Hub.
 
-- Utilisez des PAT avec des permissions minimales (par exemple, lecture
-  seule pour tirer des images) et configurez une expiration (par
+- Utilisez des PAT avec des permissions minimales (par exemple, lecture seule pour tirer des images) et configurez une expiration (par
   exemple, 30 jours).
 
-- Protégez le fichier \~/.docker/config.json avec des permissions
-  restrictives :
+- Protégez le fichier \~/.docker/config.json avec des permissions restrictives :
 
   bash
 
   chmod 600 \~/.docker/config.json
 
-- Ne versionnez jamais ce fichier dans un dépôt public (ajoutez-le à
-  .gitignore).
+- Ne versionnez jamais ce fichier dans un dépôt public (ajoutez-le à .gitignore).
 
-4.2. Configuration initiale
+## 4.2. Configuration initiale ##
 
-- Au premier lancement, Docker Desktop crée \~/.docker/config.json et
-  peut ouvrir un navigateur pour se connecter à Docker Hub.
+- Au premier lancement, Docker Desktop créé ```~/.docker/config.json````et peut ouvrir un navigateur pour se connecter à Docker Hub.
 
 - Sauvegardez la configuration par défaut :
 
   bash
 
-  cp \~/.docker/config.json \~/.docker/config.json.bak
+  cp ~/.docker/config.json ~/.docker/config.json.bak
 
 - Exemple de configuration par défaut :
 
   json
-
   {
-
-  * *\"auths\": {},**
-
-  * *\"credsStore\": \"desktop\",**
-
-  * *\"currentContext\": \"desktop-linux\"**
-
+  "auths": {},
+  "credsStore": "desktop",
+  "currentContext\": "desktop-linux\"
   }
 
-  - \"credsStore\": \"desktop\" déclenche l'authentification via
-    navigateur.
-  - \"currentContext\": \"desktop-linux\" indique le contexte de Docker
-    Desktop, distinct de Docker autonome.
+  - "credsStore": "desktop" déclenche l'authentification via navigateur.
+  - "currentContext": "desktop-linux" indique le contexte de Docker Desktop, distinct de Docker autonome.
 
-4.3. Utiliser un jeton d'accès personnel (PAT)
+## 4.3. Utiliser un jeton d'accès personnel (PAT) ##
 
-Avertissement de sécurité : Le jeton dckr_pat_EXEMPLE_FICTIF_1234567890
-est fictif et utilisé à des fins d'illustration. Ne partagez jamais un
-PAT réel dans des documents, dépôts GitHub, ou forums publics, car cela
-pourrait compromettre votre compte Docker Hub.
+Avertissement de sécurité : Le jeton ````dckr_pat_EXEMPLE_FICTIF_1234567890``` est fictif et utilisé à des fins d'illustration. Ne partagez jamais un PAT réel dans des documents, dépôts GitHub, ou forums publics, car cela pourrait compromettre votre compte Docker Hub.
 
-1.  Générez un PAT sur Docker Hub :
+### 1.  Générez un PAT sur Docker Hub : ###
 
-    - Connectez-vous à [hub.docker.com](https://hub.docker.com/), allez
-      dans Paramètres du compte \> Sécurité \> Jetons d'accès
-      personnels.
-    - Créez un jeton avec des permissions minimales (par exemple,
-      lecture seule) et une expiration (par exemple, 30 jours). Exemple
-      fictif : dckr_pat_EXEMPLE_FICTIF_1234567890.
+    - Connectez-vous à [hub.docker.com](https://hub.docker.com/), allez dans **Paramètres du compte** -> **Sécurité** -> **Jetons d'accès personnels**.
+    - Créez un jeton avec des permissions minimales (par exemple, lecture seule) et une expiration (par exemple, 30 jours). Exemple fictif : dckr_pat_EXEMPLE_FICTIF_1234567890.
 
-2.  Encodez le jeton en Base64 :
+### 2.  Encodez le jeton en Base64 : ###
 
     bash
 
@@ -310,12 +251,10 @@ pourrait compromettre votre compte Docker Hub.
 
     - Sortie (fictive) : ZGtyX3BhdF9FWEVNUExFX0ZJQ1RJRl8xMjM0NTY3ODkw
 
-3.  Mettez à jour config.json :
+### 3.  Mettez à jour config.json : ###
 
     json
-
     {
-
     * *\"auths\": {**
 
     * *\"https://index.docker.io/v1/\": {**
@@ -342,23 +281,19 @@ pourrait compromettre votre compte Docker Hub.
 
     }
 
-4.  Protégez le fichier config.json :
+## 4.  Protégez le fichier config.json : ##
 
     bash
 
     chmod 600 \~/.docker/config.json
 
-    - Ajoutez \~/.docker/config.json à .gitignore pour éviter son
-      versionnement dans un dépôt public.
+    - Ajoutez \~/.docker/config.json à .gitignore pour éviter son versionnement dans un dépôt public.
 
-Conseil : Si un PAT est accidentellement exposé, révoquez-le
-immédiatement via l'interface Docker Hub et générez un nouveau jeton.
+**Conseil : Si un PAT est accidentellement exposé, révoquez-le immédiatement via l'interface Docker Hub et générez un nouveau jeton.**
 
-4.4. Utiliser un gestionnaire de mots de passe (facultatif)
+### 4.4. Utiliser un gestionnaire de mots de passe (facultatif) ###
 
-Pour éviter d'inclure des PAT en clair, vous pouvez utiliser un
-gestionnaire de mots de passe comme pass ou stocker les identifiants
-dans des variables d'environnement sécurisées.
+Pour éviter d'inclure des PAT en clair, vous pouvez utiliser un gestionnaire de mots de passe comme pass ou stocker les identifiants dans des variables d'environnement sécurisées.
 
 - Installez pass :
 
@@ -371,17 +306,12 @@ dans des variables d'environnement sécurisées.
   json
 
   {
-
-  * *\"auths\": {},**
-
-  * *\"credsStore\": \"pass\",**
-
-  * *\"currentContext\": \"desktop-linux\"**
-
+  "auths": {},
+  "credsStore": "pass",
+  "currentContext": "desktop-linux"
   }
 
-- Initialisez pass avec votre nom d'utilisateur et mot de passe Docker
-  Hub (pas l'email) :
+- Initialisez pass avec votre nom d'utilisateur et mot de passe DockerHub (pas l'email) :
 
   bash
 
@@ -391,64 +321,38 @@ dans des variables d'environnement sécurisées.
 
 Dépannage :
 
-- Erreurs d'authentification : Vérifiez que le PAT est valide et non
-  expiré. Régénérez-le si nécessaire.
-- Limite de jetons atteinte : Supprimez les anciens jetons via
-  l'interface web de Docker Hub.
-- Problèmes de contexte : Si les commandes échouent, vérifiez le
-  contexte avec docker context ls et définissez-le sur desktop-linux
-  avec docker context use desktop-linux.
+- Erreurs d'authentification : Vérifiez que le PAT est valide et non expiré. Régénérez-le si nécessaire.
+- Limite de jetons atteinte : Supprimez les anciens jetons via l'interface web de Docker Hub.
+- Problèmes de contexte : Si les commandes échouent, vérifiez le contexte avec docker context ls et définissez-le sur desktop-linux avec docker context use desktop-linux.
 
 Notes supplémentaires
 
-- Docker vs Docker Desktop : Docker Desktop inclut son propre binaire
-  Docker mais fonctionne dans un contexte distinct (desktop-linux).
-  Docker autonome peut coexister mais nécessite une configuration
-  séparée.
+- Docker vs Docker Desktop : Docker Desktop inclut son propre binaire Docker mais fonctionne dans un contexte distinct (desktop-linux).
+  Docker autonome peut coexister mais nécessite une configuration séparée.
 
 - Conseils de performance :
 
-  - Allouez au moins 2 cœurs CPU et 8 Go de RAM à la VM pour des
-    performances optimales.
-  - Activez l'accélération 3D de VMware pour les conteneurs avec
-    interfaces graphiques.
+  - Allouez au moins 2 cœurs CPU et 8 Go de RAM à la VM pour des performances optimales.
+  - Activez l'accélération 3D de VMware pour les conteneurs avec interfaces graphiques.
 
-- Mise à jour de Docker Desktop : Vérifiez périodiquement le [site
-  officiel de Docker](https://docs.docker.com/desktop/install/ubuntu/)
-  pour de nouveaux paquets .deb et répétez l'étape 3.3.
+- Mise à jour de Docker Desktop : Vérifiez périodiquement le [site officiel de Docker](https://docs.docker.com/desktop/install/ubuntu/) pour de nouveaux paquets .deb et répétez l'étape 3.3.
 
-- Registres alternatifs : Pour utiliser des registres privés (par
-  exemple, GitHub Container Registry), ajoutez leurs URL et identifiants
-  dans auths de config.json.
+- Registres alternatifs : Pour utiliser des registres privés (par exemple, GitHub Container Registry), ajoutez leurs URL et identifiants dans auths de config.json.
 
 Problèmes courants et solutions
 
-- La VM ne démarre pas : Assurez-vous que VT-x/AMD-V est activé dans le
-  BIOS et les paramètres VMware. Vérifiez que vhv.enable = \"TRUE\" dans
+- La VM ne démarre pas : Assurez-vous que VT-x/AMD-V est activé dans le BIOS et les paramètres VMware. Vérifiez que vhv.enable = \"TRUE\" dans
   le fichier .vmx.
-- KVM non détecté : Exécutez sudo dmesg \| grep kvm pour diagnostiquer
-  les problèmes de module. Réinstallez qemu-kvm si nécessaire.
-- Docker Desktop plante : Consultez les journaux dans
-  \~/.docker/desktop/log et assurez-vous d'avoir suffisamment d'espace
-  disque.
-- Problèmes de réseau : Vérifiez que l'adaptateur réseau de la VM est
-  configuré en NAT ou Bridge dans VMware et que la résolution DNS
-  fonctionne (ping hub.docker.com).
+  
+- KVM non détecté : Exécutez ``` sudo dmesg | grep kvm ``` pour diagnostiquer les problèmes de module. Réinstallez qemu-kvm si nécessaire.
+  
+- Docker Desktop plante : Consultez les journaux dans ~/.docker/desktop/log et assurez-vous d'avoir suffisamment d'espace disque.
+  
+- Problèmes de réseau : Vérifiez que l'adaptateur réseau de la VM est configuré en NAT ou Bridge dans VMware et que la résolution DNS fonctionne (ping hub.docker.com).
 
-Note sur la sécurité des dépôts GitHub
+# Ressources #
 
-Avant de publier ce tutoriel dans un dépôt public, vérifiez qu'aucune
-information sensible (PAT, mots de passe, clés API) n'est incluse.
-Utilisez des outils comme git-secrets ou truffleHog pour scanner votre
-dépôt à la recherche de fuites potentielles.
-
-Ressources
-
-- [Installation de Docker Desktop pour
-  Linux](https://docs.docker.com/desktop/install/ubuntu/)
-- [Support KVM pour
-  Docker](https://docs.docker.com/desktop/install/linux-install/#kvm-virtualization-support)
-- [Gestion des identifiants
-  Docker](https://docs.docker.com/desktop/get-started/#credentials-management-for-linux-users)
-- [Guide VMware sur la virtualisation
-  imbriquée](https://docs.vmware.com/fr/VMware-Workstation-Pro/16.0/com.vmware.ws.using.doc/GUID-E6E4A6BE-800C-42F8-A05E-53F33F5D9C7D.html)
+- [Installation de Docker Desktop pour Linux](https://docs.docker.com/desktop/install/ubuntu/)
+- [Support KVM pour Docker](https://docs.docker.com/desktop/install/linux-install/#kvm-virtualization-support)
+- [Gestion des identifiants Docker](https://docs.docker.com/desktop/get-started/#credentials-management-for-linux-users)
+- [Guide VMware sur la virtualisation imbriquée](https://docs.vmware.com/fr/VMware-Workstation-Pro/16.0/com.vmware.ws.using.doc/GUID-E6E4A6BE-800C-42F8-A05E-53F33F5D9C7D.html)
