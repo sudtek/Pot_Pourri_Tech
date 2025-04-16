@@ -1,29 +1,19 @@
 # Installation de Docker Desktop sur Lubuntu 22.04 LTS (VM avec KVM sous VMware) #
 
-Ce guide explique étape par étape comment installer Docker Desktop sur
-une machine virtuelle (VM) Lubuntu 22.04 LTS utilisant KVM, hébergée sur
-VMware Workstation 16.1 sous Windows 10. Il traite des problèmes
-courants, comme les conflits avec Hyper-V, et intègre des mesures de
-sécurité pour protéger les jetons d\'accès personnels (PAT) utilisés
-pour l\'authentification.
+Ce guide explique étape par étape comment installer Docker Desktop sur une machine virtuelle (VM) Lubuntu 22.04 LTS utilisant KVM, hébergée sur VMware Workstation 16.1 sous Windows 10. Il traite des problèmes courants, comme les conflits avec Hyper-V, et intègre des mesures de sécurité pour protéger les jetons d\'accès personnels (PAT) utilisés
+pour l'authentification.
 
 # Prérequis #
 
 - OS Hôte : Windows 10 Professionnel (Build 19045 ou supérieur)
 - Hyperviseur : VMware Workstation 16.1 ou version ultérieure
-- OS VM : Lubuntu 22.04 LTS (Jammy Jellyfish, installation propre et à
-  jour)
+- OS VM : Lubuntu 22.04 LTS (Jammy Jellyfish, installation propre et jour)
 - BIOS : Virtualisation activée (Intel VT-x/AMD-V)
-- CPU Hôte : Intel64 Family 6 Model 58 (ou équivalent) avec support de
-  la virtualisation
-- Paramètres CPU VM : Activer \"Virtualize Intel VT-x/EPT ou AMD-V/RVI\"
-  et \"Virtualize IOMMU\" dans le fichier .vmx de la VM ou les
-  paramètres VMware
-- Mémoire VM : Minimum 4 Go (8 Go recommandés pour de meilleures
-  performances)
-- Stockage VM : Au moins 20 Go d'espace disque libre
-- Réseau : Connexion Internet stable pour les téléchargements de paquets
-  et l'authentification Docker Hub
+- CPU Hôte : Intel64 Family 6 Model 58 (ou équivalent) avec support de la virtualisation
+- Paramètres CPU VM : Activer "**Virtualize Intel VT-x/EPT** OU **AMD-V/RVI**" ET "**Virtualize IOMMU**" dans le fichier .vmx de la VM ou les paramètres VMware
+- Mémoire VM : Minimum 4 Go (8 Go recommandés pour de meilleures performances)
+- Stockage VM : Au moins 20 Go d'espace disque libre.
+- Réseau : Connexion Internet stable pour les téléchargements de paquets et l'authentification Docker Hub.
 
 **Note : Vérifiez que votre CPU supporte la virtualisation imbriquée et que celle-ci est activée dans le BIOS. Utilisez vmware -v ou consultez les journaux VMware si la VM ne démarre pas.**
 
@@ -34,7 +24,7 @@ Suivez ces étapes pour le désactiver complètement :
 
 ## 1.  Désactiver Hyper-V via l'interface graphique : ##
 
-- Ouvrez **Panneau de configuration** -> **Programmes et fonctionnalités** -> **Activer / désactiver des fonctionnalités Windows**.
+- Ouvrez **"Panneau de configuration"** -> **"Programmes et fonctionnalités"** -> **"Activer / désactiver des fonctionnalités Windows"**.
 - Décochez toutes les options Hyper-V (y compris "Plateforme Hyper-V" et "Outils de gestion Hyper-V").
 - Cliquez sur OK et redémarrez le système.
 
@@ -45,18 +35,22 @@ Suivez ces étapes pour le désactiver complètement :
 
 ## 3.  Désactiver le lancement de l'hyperviseur (CMD en mode administrateur) : ##   
 
-```bcdedit /set hypervisorlaunchtype off```
+```shell
+bcdedit /set hypervisorlaunchtype off
+```
 
 ## 4.  Supprimer les fonctionnalités Hyper-V (PowerShell en mode administrateur) : ##
 
+```shell
 Disable-WindowsOptionalFeature -Online -FeatureName
 Microsoft-Hyper-V-All
+```
 
 ## 5.  Redémarrer le système : ##
 
 - Redémarrez Windows pour appliquer les modifications.
 
-Dépannage : Si la VM ne démarre toujours pas avec VT-x/AMD-V activé, assurez-vous que VMware Workstation est à jour et vérifiez dans le fichier .vmx que vhv.enable = "TRUE".
+Dépannage : Si la VM ne démarre toujours pas avec **VT-x/AMD-V** activé, assurez-vous que VMware Workstation est à jour et vérifiez dans le fichier **.vmx** que ```svhv.enable = "TRUE"```.
 
 # Étape 2 : Installer et configurer KVM dans la VM Lubuntu KVM est requis pour que Docker Desktop exécute sa propre VM interne. #
 
@@ -70,9 +64,9 @@ sudo apt install cpu-checker
 kvm-ok
 ```
 
-- Résultat attendu : INFO: /dev/kvm exists et KVM acceleration can be used.
+- Résultat attendu : ```INFO: /dev/kvm exists``` et ```KVM acceleration can be used```.
 
-- Erreur possible : Si vous voyez Your CPU does not support KVM extensions, Hyper-V est probablement encore actif. Revenez à l'étape 1 ou vérifiez les paramètres de virtualisation CPU dans VMware.
+- Erreur possible : Si vous voyez ```Your CPU does not support KVM extensions```, Hyper-V est probablement encore actif. Revenez à l'étape 1 ou vérifiez les paramètres de virtualisation CPU dans VMware.
 
 ## 2.  Installer les modules KVM : ##
 
@@ -102,10 +96,10 @@ lsmod | grep kvm
 sudo usermod -aG kvm $USER
 ls -al /dev/kvm
 ```   
-- Assurez-vous que /dev/kvm existe avec des permissions comme crw-rw----+ 1 root kvm.
+- Assurez-vous que ```/dev/kvm``` existe avec des permissions comme ```crw-rw----+ 1 root kvm```.
 - Déconnectez-vous et reconnectez-vous pour appliquer les changements de groupe.
 
-Dépannage : Si /dev/kvm est absent ou inaccessible, vérifiez si le module kvm est chargé (lsmod | grep kvm). Rechargez le module si nécessaire ou réinstallez qemu-kvm avec sudo apt install qemu-kvm.
+Dépannage : Si ```/dev/kvm``` est absent ou inaccessible, vérifiez si le module kvm est chargé ```lsmod | grep kvm```. Rechargez le module si nécessaire ou réinstallez qemu-kvm avec ```sudo apt install qemu-kvm```.
 
 # Étape 3 : Installer Docker Desktop sur Lubuntu #
 
@@ -147,38 +141,32 @@ sudo apt install ./docker-desktop-4.26.1-amd64.deb
 
 ## 4.  Vérifier l'installation : ##
 
-    bash
-
-    docker -v
-
-    docker-credential-desktop version
-
-    docker-index version
-
-    - Résultats attendus :
-
-      - Docker version 25.0.0, build e758fe5 (ou plus récent)
-      - docker-credential-desktop v0.7.0
-      - docker-index v0.0.35
+```bash
+docker -v
+docker-credential-desktop version
+docker-index version
+```
+- Résultats attendus :
+- Docker version 25.0.0, build e758fe5 (ou plus récent)
+- docker-credential-desktop v0.7.0
+- docker-index v0.0.35
 
 ## 5.  Lancer Docker Desktop : ##
 
-    bash
-
-    systemctl --user start docker-desktop
-
-    - Alternativement, utilisez le raccourci Docker Desktop dans le menu Programmation.
+```bash
+systemctl --user start docker-desktop
+```
+- Alternativement, utilisez le raccourci Docker Desktop dans le menu Programmation.
 
 Dépannage :
-
-- Si Docker Desktop échoue avec une erreur "KVM virtualization support needed", revérifiez la configuration de KVM (Étape 2).
-- Si l'installation échoue, assurez-vous que le paquet .deb correspond à l'architecture amd64 et videz le cache APT avec sudo apt clean.
+- Si Docker Desktop échoue avec une erreur ```KVM virtualization support needed```, revérifiez la configuration de KVM (Étape 2).
+- Si l'installation échoue, assurez-vous que le paquet .deb correspond à l'architecture amd64 et videz le cache APT avec ```sudo apt clean```.
 
 # Étape 4 : Configurer l'authentification Docker Desktop #
 
-Docker Desktop utilise le fichier \~/.docker/config.json pour l'authentification avec Docker Hub ou d'autres registres. Un compte Docker Hub gratuit est limité à 5 jetons d'accès personnels (PAT), gérez-les avec soin.
+Docker Desktop utilise le fichier ```~/.docker/config.json``` pour l'authentification avec Docker Hub ou d'autres registres. Un compte Docker Hub gratuit est limité à 5 jetons d'accès personnels (PAT), gérez-les avec soin.
 
-Avertissement de sécurité : Si une version précédente de ce tutoriel ou un document connexe a inclus un PAT réel, révoquez-le immédiatement via [hub.docker.com](https://hub.docker.com/) (Paramètres -> Sécurité -> Jetons d'accès personnels) pour éviter tout accès non autorisé à votre compte.
+Avertissement de sécurité : Si une version précédente de ce tutoriel ou un document connexe a inclus un PAT réel, révoquez-le immédiatement via [hub.docker.com](https://hub.docker.com/) ("**Paramètres**" -> "**Sécurité**" -> "**Jetons d'accès personnels**") pour éviter tout accès non autorisé à votre compte.
 
 ## 4.1. Sécurité des jetons d'accès personnels (PAT) ##
 
@@ -186,36 +174,34 @@ Avertissement de sécurité : Si une version précédente de ce tutoriel ou un d
 
 - Si un PAT est exposé, révoquez-le immédiatement via l'interface Docker Hub.
 
-- Utilisez des PAT avec des permissions minimales (par exemple, lecture seule pour tirer des images) et configurez une expiration (par
-  exemple, 30 jours).
+- Utilisez des PAT avec des permissions minimales (par exemple, lecture seule pour tirer des images) et configurez une expiration (par exemple, 30 jours).
 
-- Protégez le fichier \~/.docker/config.json avec des permissions restrictives :
+- Protégez le fichier ```~/.docker/config.json``` avec des permissions restrictives :
 
-  bash
-
-  chmod 600 \~/.docker/config.json
-
+```bash
+chmod 600 \~/.docker/config.json
+```
 - Ne versionnez jamais ce fichier dans un dépôt public (ajoutez-le à .gitignore).
 
 ## 4.2. Configuration initiale ##
 
-- Au premier lancement, Docker Desktop créé ```~/.docker/config.json````et peut ouvrir un navigateur pour se connecter à Docker Hub.
+- Au premier lancement, Docker Desktop créé ```~/.docker/config.json``` et peut ouvrir un navigateur pour se connecter à Docker Hub.
 
 - Sauvegardez la configuration par défaut :
 
-  bash
-
-  cp ~/.docker/config.json ~/.docker/config.json.bak
+  ```bash
+cp ~/.docker/config.json ~/.docker/config.json.bak
+```
 
 - Exemple de configuration par défaut :
 
-  json
-  {
-  "auths": {},
-  "credsStore": "desktop",
-  "currentContext\": "desktop-linux\"
-  }
-
+```json
+{
+"auths": {},
+"credsStore": "desktop",
+"currentContext\": "desktop-linux\"
+}
+```
   - "credsStore": "desktop" déclenche l'authentification via navigateur.
   - "currentContext": "desktop-linux" indique le contexte de Docker Desktop, distinct de Docker autonome.
 
