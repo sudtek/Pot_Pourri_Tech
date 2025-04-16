@@ -146,6 +146,7 @@ docker -v
 docker-credential-desktop version
 docker-index version
 ```
+
 - Résultats attendus :
 - Docker version 25.0.0, build e758fe5 (ou plus récent)
 - docker-credential-desktop v0.7.0
@@ -189,7 +190,7 @@ chmod 600 \~/.docker/config.json
 
 - Sauvegardez la configuration par défaut :
 
-  ```bash
+```bash
 cp ~/.docker/config.json ~/.docker/config.json.bak
 ```
 
@@ -202,8 +203,8 @@ cp ~/.docker/config.json ~/.docker/config.json.bak
 "currentContext\": "desktop-linux\"
 }
 ```
-  - "credsStore": "desktop" déclenche l'authentification via navigateur.
-  - "currentContext": "desktop-linux" indique le contexte de Docker Desktop, distinct de Docker autonome.
+- ```"credsStore": "desktop"``` déclenche l'authentification via navigateur.
+- ```"currentContext": "desktop-linux"``` indique le contexte de Docker Desktop, distinct de Docker autonome.
 
 ## 4.3. Utiliser un jeton d'accès personnel (PAT) ##
 
@@ -211,54 +212,42 @@ Avertissement de sécurité : Le jeton ````dckr_pat_EXEMPLE_FICTIF_1234567890```
 
 ### 1.  Générez un PAT sur Docker Hub : ###
 
-    - Connectez-vous à [hub.docker.com](https://hub.docker.com/), allez dans **Paramètres du compte** -> **Sécurité** -> **Jetons d'accès personnels**.
-    - Créez un jeton avec des permissions minimales (par exemple, lecture seule) et une expiration (par exemple, 30 jours). Exemple fictif : dckr_pat_EXEMPLE_FICTIF_1234567890.
+- Connectez-vous à [hub.docker.com](https://hub.docker.com/), allez dans **Paramètres du compte** -> **Sécurité** -> **Jetons d'accès personnels**.
+- Créez un jeton avec des permissions minimales (par exemple, lecture seule) et une expiration (par exemple, 30 jours). Exemple fictif : dckr_pat_EXEMPLE_FICTIF_1234567890.
 
 ### 2.  Encodez le jeton en Base64 : ###
 
-    bash
+```bash
+echo -n \'dckr_pat_EXEMPLE_FICTIF_1234567890\' \| base64
+```
 
-    echo -n \'dckr_pat_EXEMPLE_FICTIF_1234567890\' \| base64
-
-    - Sortie (fictive) : ZGtyX3BhdF9FWEVNUExFX0ZJQ1RJRl8xMjM0NTY3ODkw
+Sortie (fictive) : ```ZGtyX3BhdF9FWEVNUExFX0ZJQ1RJRl8xMjM0NTY3ODkw```
 
 ### 3.  Mettez à jour config.json : ###
 
-    json
-    {
-    * *\"auths\": {**
-
-    * *\"https://index.docker.io/v1/\": {**
-
-    * *\"auth\": \"ZGtyX3BhdF9FWEVNUExFX0ZJQ1RJRl8xMjM0NTY3ODkw\"**
-
-    * *}**
-
-    * *},**
-
-    * *\"credsStore\": \"desktop\",**
-
-    * *\"currentContext\": \"desktop-linux\",**
-
-    * *\"plugins\": {**
-
-    * *\"-x-cli-hints\": {**
-
-    * *\"enabled\": \"true\"**
-
-    * *}**
-
-    * *}**
-
-    }
+```json
+       {
+           "auths": {
+               "https://index.docker.io/v1/": {
+                   "auth": "ZGtyX3BhdF9FWEVNUExFX0ZJQ1RJRl8xMjM0NTY3ODkw"
+               }
+           },
+           "credsStore": "desktop",
+           "currentContext": "desktop-linux",
+           "plugins": {
+               "-x-cli-hints": {
+                   "enabled": "true"
+               }
+           }
+       }
+```
 
 ## 4.  Protégez le fichier config.json : ##
 
-    bash
-
-    chmod 600 \~/.docker/config.json
-
-    - Ajoutez \~/.docker/config.json à .gitignore pour éviter son versionnement dans un dépôt public.
+```bash
+chmod 600 \~/.docker/config.json
+```
+- Ajoutez \~/.docker/config.json à .gitignore pour éviter son versionnement dans un dépôt public.
 
 **Conseil : Si un PAT est accidentellement exposé, révoquez-le immédiatement via l'interface Docker Hub et générez un nouveau jeton.**
 
@@ -268,35 +257,33 @@ Pour éviter d'inclure des PAT en clair, vous pouvez utiliser un gestionnaire de
 
 - Installez pass :
 
-  bash
-
-  sudo apt install pass
+```bash
+sudo apt install pass
+```
 
 - Mettez à jour config.json pour utiliser pass :
 
-  json
-
+```json
   {
   "auths": {},
   "credsStore": "pass",
   "currentContext": "desktop-linux"
   }
+```
 
 - Initialisez pass avec votre nom d'utilisateur et mot de passe DockerHub (pas l'email) :
 
-  bash
-
-  pass init
-
-  pass insert docker-credential-desktop
+```bash
+pass init
+pass insert docker-credential-desktop
+```
 
 Dépannage :
-
 - Erreurs d'authentification : Vérifiez que le PAT est valide et non expiré. Régénérez-le si nécessaire.
 - Limite de jetons atteinte : Supprimez les anciens jetons via l'interface web de Docker Hub.
 - Problèmes de contexte : Si les commandes échouent, vérifiez le contexte avec docker context ls et définissez-le sur desktop-linux avec docker context use desktop-linux.
 
-Notes supplémentaires
+Notes supplémentaires :
 
 - Docker vs Docker Desktop : Docker Desktop inclut son propre binaire Docker mais fonctionne dans un contexte distinct (desktop-linux).
   Docker autonome peut coexister mais nécessite une configuration séparée.
@@ -310,7 +297,7 @@ Notes supplémentaires
 
 - Registres alternatifs : Pour utiliser des registres privés (par exemple, GitHub Container Registry), ajoutez leurs URL et identifiants dans auths de config.json.
 
-Problèmes courants et solutions
+Problèmes courants et solutions :
 
 - La VM ne démarre pas : Assurez-vous que VT-x/AMD-V est activé dans le BIOS et les paramètres VMware. Vérifiez que vhv.enable = \"TRUE\" dans
   le fichier .vmx.
