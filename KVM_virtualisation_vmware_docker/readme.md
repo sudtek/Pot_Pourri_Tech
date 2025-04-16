@@ -49,69 +49,61 @@ Suivez ces étapes pour le désactiver complètement :
 
 ## 4.  Supprimer les fonctionnalités Hyper-V (PowerShell en mode administrateur) : ##
 
-powershell
+Disable-WindowsOptionalFeature -Online -FeatureName
+Microsoft-Hyper-V-All
 
-```Disable-WindowsOptionalFeature -Online -FeatureName
-Microsoft-Hyper-V-All```
-
-## 5.  Redémarrer le système :
+## 5.  Redémarrer le système : ##
 
 - Redémarrez Windows pour appliquer les modifications.
 
 Dépannage : Si la VM ne démarre toujours pas avec VT-x/AMD-V activé, assurez-vous que VMware Workstation est à jour et vérifiez dans le fichier .vmx que vhv.enable = "TRUE".
 
-#Étape 2 : Installer et configurer KVM dans la VM Lubuntu KVM est requis pour que Docker Desktop exécute sa propre VM interne.#
+# Étape 2 : Installer et configurer KVM dans la VM Lubuntu KVM est requis pour que Docker Desktop exécute sa propre VM interne. #
 
 Suivez ces étapes pour l'installer :
 
 ## 1.  Vérifier le support de virtualisation du CPU : ##
 
-    bash
+```bash
+sudo apt update
+sudo apt install cpu-checker
+kvm-ok
+```
 
-    sudo apt update
+- Résultat attendu : INFO: /dev/kvm exists et KVM acceleration can be used.
 
-    sudo apt install cpu-checker
-
-    kvm-ok
-
-    - Résultat attendu : INFO: /dev/kvm exists et KVM acceleration can be used.
-    - Erreur possible : Si vous voyez Your CPU does not support KVM extensions, Hyper-V est probablement encore actif. Revenez à l'étape 1 ou vérifiez les paramètres de virtualisation CPU dans VMware.
+- Erreur possible : Si vous voyez Your CPU does not support KVM extensions, Hyper-V est probablement encore actif. Revenez à l'étape 1 ou vérifiez les paramètres de virtualisation CPU dans VMware.
 
 ## 2.  Installer les modules KVM : ##
 
-    - Pour les processeurs Intel :
+ - Pour les processeurs Intel :
 
-      bash
+```bash
+sudo modprobe kvm_intel
+```
 
-      sudo modprobe kvm_intel
-
-    - Pour les processeurs AMD :
-
-      bash
-
-      sudo modprobe kvm_amd
+- Pour les processeurs AMD :
+```bash
+sudo modprobe kvm_amd
+```
 
 ## 3.  Vérifier l'installation de KVM : ##
 
-    bash
+```bash
+kvm-ok
+lsmod | grep kvm
+```
 
-    kvm-ok
-
-    lsmod | grep kvm
-
-    - Cherchez kvm_intel ou kvm_amd dans la sortie de lsmod.
+- Cherchez kvm_intel ou kvm_amd dans la sortie de lsmod.
 
 ## 4.  Configurer les permissions utilisateur : ##
 
-    bash
-
-    sudo usermod -aG kvm $USER
-
-    ls -al /dev/kvm
-    
-    - Assurez-vous que /dev/kvm existe avec des permissions comme crw-rw----+ 1 root kvm.
-    
-    - Déconnectez-vous et reconnectez-vous pour appliquer les changements de groupe.
+```bash
+sudo usermod -aG kvm $USER
+ls -al /dev/kvm
+```   
+- Assurez-vous que /dev/kvm existe avec des permissions comme crw-rw----+ 1 root kvm.
+- Déconnectez-vous et reconnectez-vous pour appliquer les changements de groupe.
 
 Dépannage : Si /dev/kvm est absent ou inaccessible, vérifiez si le module kvm est chargé (lsmod | grep kvm). Rechargez le module si nécessaire ou réinstallez qemu-kvm avec sudo apt install qemu-kvm.
 
@@ -121,40 +113,37 @@ Docker Desktop nécessite un OS basé sur Ubuntu 64 bits et certaines dépendanc
 
 ## 1.  Installer les prérequis : ##
 
-    bash
-
-    sudo apt update
-
-    sudo apt install gnome-terminal
-
-    - gnome-terminal est requis pour les environnements de bureau non-GNOME comme LXQt de Lubuntu.
+```bash
+sudo apt update
+sudo apt install gnome-terminal
+```
+- gnome-terminal est requis pour les environnements de bureau non-GNOME comme LXQt de Lubuntu.
 
 ## 2.  Configurer le dépôt Docker : ##
 
-    bash
-
-    sudo apt install ca-certificates curl gnupg
-    sudo install -m 0755 -d /etc/apt/keyrings
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-    sudo chmod a+r /etc/apt/keyrings/docker.gpg
-    echo "deb [arch=$(dpkg --print-architecture) igned-by=/etc/apt/keyrings/docker.gpg]
-    https://download.docker.com/linux/ubuntu \$(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee
-    /etc/apt/sources.list.d/docker.list > /dev/null
-    sudo apt update
-
+```bash
+sudo apt install ca-certificates curl gnupg
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+echo "deb [arch=$(dpkg --print-architecture) igned-by=/etc/apt/keyrings/docker.gpg]
+https://download.docker.com/linux/ubuntu \$(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee
+/etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt update
+```
 ## 3.  Télécharger et installer Docker Desktop : ##
 
-    - Téléchargez le dernier paquet .deb (par exemple, version 4.26.1) :
+- Téléchargez le dernier paquet .deb (par exemple, version 4.26.1) :
 
-      bash
+```bash
+wget https://desktop.docker.com/linux/main/amd64/docker-desktop-4.26.1-amd64.deb
+```
 
-      wget https://desktop.docker.com/linux/main/amd64/docker-desktop-4.26.1-amd64.deb
+- Installez le paquet :
 
-    - Installez le paquet :
-
-      bash
-
-      sudo apt install ./docker-desktop-4.26.1-amd64.deb
+```bash
+sudo apt install ./docker-desktop-4.26.1-amd64.deb
+```
 
 ## 4.  Vérifier l'installation : ##
 
