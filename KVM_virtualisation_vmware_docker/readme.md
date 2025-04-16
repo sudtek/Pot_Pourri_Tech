@@ -218,7 +218,7 @@ Avertissement de sécurité : Le jeton ````dckr_pat_EXEMPLE_FICTIF_1234567890```
 ### 2.  Encodez le jeton en Base64 : ###
 
 ```bash
-echo -n \'dckr_pat_EXEMPLE_FICTIF_1234567890\' \| base64
+echo -n 'dckr_pat_EXEMPLE_FICTIF_1234567890\' | base64
 ```
 
 Sortie (fictive) : ```ZGtyX3BhdF9FWEVNUExFX0ZJQ1RJRl8xMjM0NTY3ODkw```
@@ -278,39 +278,44 @@ pass init
 pass insert docker-credential-desktop
 ```
 
-Dépannage :
+**Dépannage :**
 - Erreurs d'authentification : Vérifiez que le PAT est valide et non expiré. Régénérez-le si nécessaire.
+  
 - Limite de jetons atteinte : Supprimez les anciens jetons via l'interface web de Docker Hub.
+  
 - Problèmes de contexte : Si les commandes échouent, vérifiez le contexte avec docker context ls et définissez-le sur desktop-linux avec docker context use desktop-linux.
 
-Notes supplémentaires :
+**Notes supplémentaires :**
 
 - Docker vs Docker Desktop : Docker Desktop inclut son propre binaire Docker mais fonctionne dans un contexte distinct (desktop-linux).
-  Docker autonome peut coexister mais nécessite une configuration séparée.
+  
+- Docker autonome peut coexister mais nécessite une configuration séparée.
 
-- Conseils de performance :
-
-  - Allouez au moins 2 cœurs CPU et 8 Go de RAM à la VM pour des performances optimales.
-  - Activez l'accélération 3D de VMware pour les conteneurs avec interfaces graphiques.
-
+**Conseils de performance :**
+- Allouez au moins 2 cœurs CPU et 8 Go de RAM à la VM pour des performances optimales.
+  
+- Activez l'accélération 3D de VMware pour les conteneurs avec interfaces graphiques.
+  
 - Mise à jour de Docker Desktop : Vérifiez périodiquement le [site officiel de Docker](https://docs.docker.com/desktop/install/ubuntu/) pour de nouveaux paquets .deb et répétez l'étape 3.3.
-
+  
 - Registres alternatifs : Pour utiliser des registres privés (par exemple, GitHub Container Registry), ajoutez leurs URL et identifiants dans auths de config.json.
 
-Problèmes courants et solutions :
-
-- La VM ne démarre pas : Assurez-vous que VT-x/AMD-V est activé dans le BIOS et les paramètres VMware. Vérifiez que vhv.enable = \"TRUE\" dans
-  le fichier .vmx.
+**Problèmes courants et solutions :**
+- La VM ne démarre pas : Assurez-vous que VT-x/AMD-V est activé dans le BIOS et les paramètres VMware. Vérifiez que ``` vhv.enable = \"TRUE\" ``` dans
+  le fichier **.vmx**.
   
 - KVM non détecté : Exécutez ``` sudo dmesg | grep kvm ``` pour diagnostiquer les problèmes de module. Réinstallez qemu-kvm si nécessaire.
   
-- Docker Desktop plante : Consultez les journaux dans ~/.docker/desktop/log et assurez-vous d'avoir suffisamment d'espace disque.
+- Docker Desktop plante : Consultez les journaux dans ``` ~/.docker/desktop/log ``` et assurez-vous d'avoir suffisamment d'espace disque.
   
 - Problèmes de réseau : Vérifiez que l'adaptateur réseau de la VM est configuré en NAT ou Bridge dans VMware et que la résolution DNS fonctionne (ping hub.docker.com).
 
 # Ressources #
 
 - [Installation de Docker Desktop pour Linux](https://docs.docker.com/desktop/install/ubuntu/)
+  
 - [Support KVM pour Docker](https://docs.docker.com/desktop/install/linux-install/#kvm-virtualization-support)
+  
 - [Gestion des identifiants Docker](https://docs.docker.com/desktop/get-started/#credentials-management-for-linux-users)
+  
 - [Guide VMware sur la virtualisation imbriquée](https://docs.vmware.com/fr/VMware-Workstation-Pro/16.0/com.vmware.ws.using.doc/GUID-E6E4A6BE-800C-42F8-A05E-53F33F5D9C7D.html)
