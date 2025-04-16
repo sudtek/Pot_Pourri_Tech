@@ -194,7 +194,11 @@ chmod 600 \~/.docker/config.json
 cp ~/.docker/config.json ~/.docker/config.json.bak
 ```
 
-- Exemple de configuration par défaut :
+- Exemple de configuration config.json par défaut :
+
+```bash
+cat ~/.docker/config.json
+```
 
 ```json
 {
@@ -203,8 +207,27 @@ cp ~/.docker/config.json ~/.docker/config.json.bak
 "currentContext\": "desktop-linux\"
 }
 ```
-- ```"credsStore": "desktop"``` déclenche l'authentification via navigateur.
+- ```"credsStore": "desktop"``` déclenche l'authentification via navigateur / Dashboard local de l'application Docker-desktop.
 - ```"currentContext": "desktop-linux"``` indique le contexte de Docker Desktop, distinct de Docker autonome.
+
+Docker-Desktop peut utiliser le gestionaire de mot de passe nommé pass https://www.passwordstore.org/ basé sur gpg sous linux mais ce n'est pas obligatoire. Il existe d'autres méthodes (https://docs.docker.com/desktop/get-started/#credentials-management-for-linux-users)[https://docs.docker.com/desktop/get-started/#credentials-management-for-linux-users]. eexemple avec ```pass``` sous linux.
+
+```bash
+which pass
+```bash
+
+```#/usr/bin/pass```
+
+Dans ce cas la config.json devra avoir la directive
+
+```json 
+config.json{
+        "auths": {},
+        "credsStore": "**pass**","desktop",
+        "currentContext": "desktop-linux"
+        }
+```
+
 
 ## 4.3. Utiliser un jeton d'accès personnel (PAT) ##
 
@@ -215,13 +238,8 @@ Avertissement de sécurité : Le jeton ````dckr_pat_EXEMPLE_FICTIF_1234567890```
 - Connectez-vous à [hub.docker.com](https://hub.docker.com/), allez dans **Paramètres du compte** -> **Sécurité** -> **Jetons d'accès personnels**.
 - Créez un jeton avec des permissions minimales (par exemple, lecture seule) et une expiration (par exemple, 30 jours). Exemple fictif : dckr_pat_EXEMPLE_FICTIF_1234567890.
 
-### 2.  Encodez le jeton en Base64 : ###
-
-```bash
-echo -n 'dckr_pat_EXEMPLE_FICTIF_1234567890\' | base64
-```
-
-Sortie (fictive) : ```ZGtyX3BhdF9FWEVNUExFX0ZJQ1RJRl8xMjM0NTY3ODkw```
+### 2.  jeton en Base64 : ###
+Jeton fictif ;) : ```ZGtyX3BhdF9FWEVNUExFX0ZJQ1RJRl8xMjM0NTY3ODkw```
 
 ### 3.  Mettez à jour config.json : ###
 
@@ -247,7 +265,7 @@ Sortie (fictive) : ```ZGtyX3BhdF9FWEVNUExFX0ZJQ1RJRl8xMjM0NTY3ODkw```
 ```bash
 chmod 600 \~/.docker/config.json
 ```
-- Ajoutez \~/.docker/config.json à .gitignore pour éviter son versionnement dans un dépôt public.
+- Ajoutez ```~/.docker/config.json``` à **.gitignore** pour éviter son versionnement dans un dépôt public.
 
 **Conseil : Si un PAT est accidentellement exposé, révoquez-le immédiatement via l'interface Docker Hub et générez un nouveau jeton.**
 
@@ -277,6 +295,22 @@ sudo apt install pass
 pass init
 pass insert docker-credential-desktop
 ```
+
+# - NOTE 1 : Chaque tentative d'authentification ajoute automatiquement un token sur le site web de docker (https://hub.docker.com/signup)[https://hub.docker.com/signup] sauf qu'on est limité à 5 token maximum !!! Cela implique de faire le menage régulierement à la main (voir onglet security du site).
+
+# - NOTE 2 : ATTENTION pour pass et / ou via la commande login; il faut imperativement utiliser la même typo que le nickname utilisateur docker (sensible à la case) qui apparait lorsque l'on se connecte à l'interface web de docker mais ne pas utiliser votre Email pour vous connecter via pass et/ou login car votre email n'est pas votre nickname utilisateur docker !!!
+
+# - NOTE 3 :  Pass ou login requier toujours un couple (nickname utilisateur docker ; mot de passe) ou ( <token> ; leTokenenBase64 )(https://docs.docker.com/engine/reference/commandline/login/)[https://docs.docker.com/engine/reference/commandline/login/}
+
+# - NOTE 4 : Docker-Desktop peut aussi s'hautentifier à des dépots publics / ou privés autre que celui par defaut de docker (privé local, github,amazon ...) en faisant varier les methodes (ce serait d'avoir une liste d'exemple clefs en main car c'est vite galere et chronophage ...)
+
+
+
+
+
+
+
+-------
 
 **Dépannage :**
 - Erreurs d'authentification : Vérifiez que le PAT est valide et non expiré. Régénérez-le si nécessaire.
