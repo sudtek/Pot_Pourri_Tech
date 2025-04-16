@@ -25,9 +25,7 @@ pour l\'authentification.
 - Réseau : Connexion Internet stable pour les téléchargements de paquets
   et l'authentification Docker Hub
 
-Note : Vérifiez que votre CPU supporte la virtualisation imbriquée et
-que celle-ci est activée dans le BIOS. Utilisez vmware -v ou consultez
-les journaux VMware si la VM ne démarre pas.
+**Note : Vérifiez que votre CPU supporte la virtualisation imbriquée et que celle-ci est activée dans le BIOS. Utilisez vmware -v ou consultez les journaux VMware si la VM ne démarre pas.**
 
 # Étape 1 : Résoudre les conflits Hyper-V sous Windows #
 
@@ -36,36 +34,34 @@ Suivez ces étapes pour le désactiver complètement :
 
 ## 1.  Désactiver Hyper-V via l'interface graphique : ##
 
-    - Ouvrez Panneau de configuration -> Programmes et fonctionnalités -> Activer ou désactiver des fonctionnalités Windows.
-      
-    - Décochez toutes les options Hyper-V (y compris "Plateforme Hyper-V" et "Outils de gestion Hyper-V").
-    
-    - Cliquez sur OK et redémarrez le système.
+- Ouvrez **Panneau de configuration** -> **Programmes et fonctionnalités** -> **Activer / désactiver des fonctionnalités Windows**.
+- Décochez toutes les options Hyper-V (y compris "Plateforme Hyper-V" et "Outils de gestion Hyper-V").
+- Cliquez sur OK et redémarrez le système.
 
 ## 2.  Vérifier l'état d'Hyper-V : ##
 
-    - Exécutez systeminfo dans l'Invite de commandes et vérifiez la section \"Exigences Hyper-V\". Elle doit indiquer qu'aucun hyperviseur n'est détecté.
-      
-    - Sinon, ouvrez msinfo32 et assurez-vous que \"Sécurité basée sur la virtualisation\" est Non actif.
+- Exécutez systeminfo dans l'Invite de commandes et vérifiez la section "Exigences Hyper-V". Elle doit indiquer qu'aucun hyperviseur n'est détecté.
+- Sinon, ouvrez msinfo32 et assurez-vous que \"Sécurité basée sur la virtualisation\" est Non actif.
 
 ## 3.  Désactiver le lancement de l'hyperviseur (CMD en mode administrateur) : ##   
 
-    bcdedit /set hypervisorlaunchtype off
+```bcdedit /set hypervisorlaunchtype off```
 
 ## 4.  Supprimer les fonctionnalités Hyper-V (PowerShell en mode administrateur) : ##
 
-    powershell
+powershell
 
-    Disable-WindowsOptionalFeature -Online -FeatureName
-    Microsoft-Hyper-V-All```
+```Disable-WindowsOptionalFeature -Online -FeatureName
+Microsoft-Hyper-V-All```
 
 ## 5.  Redémarrer le système :
 
-    - Redémarrez Windows pour appliquer les modifications.
+- Redémarrez Windows pour appliquer les modifications.
 
 Dépannage : Si la VM ne démarre toujours pas avec VT-x/AMD-V activé, assurez-vous que VMware Workstation est à jour et vérifiez dans le fichier .vmx que vhv.enable = "TRUE".
 
-# Étape 2 : Installer et configurer KVM dans la VM Lubuntu KVM est requis pour que Docker Desktop exécute sa propre VM interne. #
+#Étape 2 : Installer et configurer KVM dans la VM Lubuntu KVM est requis pour que Docker Desktop exécute sa propre VM interne.#
+
 Suivez ces étapes pour l'installer :
 
 ## 1.  Vérifier le support de virtualisation du CPU : ##
