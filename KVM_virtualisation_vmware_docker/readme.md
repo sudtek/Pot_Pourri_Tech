@@ -446,7 +446,7 @@ ect ...
 - Registres alternatifs : Pour utiliser des registres privés (par exemple, GitHub Container Registry), ajoutez leurs URL et identifiants dans auths de config.json.
 
 **Problèmes courants et solutions :**
-- La VM ne démarre pas : Assurez-vous que VT-x/AMD-V est activé dans le BIOS et les paramètres VMware. Vérifiez que ``` vhv.enable = \"TRUE\" ``` dans
+- La VM ne démarre pas : Assurez-vous que VT-x/AMD-V est activé dans le BIOS et les paramètres VMware. Vérifiez que ``` vhv.enable = "TRUE" ``` dans
   le fichier **.vmx**.
   
 - KVM non détecté : Exécutez ``` sudo dmesg | grep kvm ``` pour diagnostiquer les problèmes de module. Réinstallez qemu-kvm si nécessaire.
