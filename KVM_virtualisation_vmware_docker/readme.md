@@ -239,7 +239,18 @@ Avertissement de sécurité : Le jeton ````dckr_pat_EXEMPLE_FICTIF_1234567890```
 - Créez un jeton avec des permissions minimales (par exemple, lecture seule) et une expiration (par exemple, 30 jours). Exemple fictif : dckr_pat_EXEMPLE_FICTIF_1234567890.
 
 ### 2.  jeton en Base64 : ###
-Jeton fictif ;) : ```ZGtyX3BhdF9FWEVNUExFX0ZJQ1RJRl8xMjM0NTY3ODkw```
+
+Utiliser un token (R/W) pregenere depuis / sur le site docker : **dckr_pat_xxxxxxxxxxxxx-xxxx-xxxxxx** et le convertir en base 64 :
+
+```bash
+echo -n 'dckr_pat_xxxxxxxxxxxxx-xxxx-xxxxxx' | base64
+```
+Generera notre token fictif base64 : 
+
+```ZGtyX3BhdF9FWEVNUExFX0ZJQ1RJRl8xMjM0NTY3ODkw```
+
+
+Utilisation d'un Jeton fictif base64 : ```ZGtyX3BhdF9FWEVNUExFX0ZJQ1RJRl8xMjM0NTY3ODkw```
 
 ### 3.  Mettez à jour config.json : ###
 
@@ -260,7 +271,7 @@ Jeton fictif ;) : ```ZGtyX3BhdF9FWEVNUExFX0ZJQ1RJRl8xMjM0NTY3ODkw```
        }
 ```
 
-## 4.  Protégez le fichier config.json : ##
+## 5.  Protégez le fichier config.json : ##
 
 ```bash
 chmod 600 \~/.docker/config.json
@@ -269,7 +280,7 @@ chmod 600 \~/.docker/config.json
 
 **Conseil : Si un PAT est accidentellement exposé, révoquez-le immédiatement via l'interface Docker Hub et générez un nouveau jeton.**
 
-### 4.4. Utiliser un gestionnaire de mots de passe (facultatif) ###
+### 1. Utiliser un gestionnaire de mots de passe (facultatif) ###
 
 Pour éviter d'inclure des PAT en clair, vous pouvez utiliser un gestionnaire de mots de passe comme pass ou stocker les identifiants dans des variables d'environnement sécurisées.
 
@@ -296,26 +307,112 @@ pass init
 pass insert docker-credential-desktop
 ```
 
-# - NOTE 1 : Chaque tentative d'authentification ajoute automatiquement un token sur le site web de docker (https://hub.docker.com/signup)[https://hub.docker.com/signup] sauf qu'on est limité à 5 token maximum !!! Cela implique de faire le menage régulierement à la main (voir onglet security du site).
+- NOTE 1 : Chaque tentative d'authentification ajoute automatiquement un token sur le site web de docker (https://hub.docker.com/signup)[https://hub.docker.com/signup] sauf qu'on est limité à 5 token maximum !!! Cela implique de faire le menage régulierement à la main (voir onglet security du site).
 
-# - NOTE 2 : ATTENTION pour pass et / ou via la commande login; il faut imperativement utiliser la même typo que le nickname utilisateur docker (sensible à la case) qui apparait lorsque l'on se connecte à l'interface web de docker mais ne pas utiliser votre Email pour vous connecter via pass et/ou login car votre email n'est pas votre nickname utilisateur docker !!!
+- NOTE 2 : ATTENTION pour pass et / ou via la commande login; il faut imperativement utiliser la même typo que le nickname utilisateur docker (sensible à la case) qui apparait lorsque l'on se connecte à l'interface web de docker mais ne pas utiliser votre Email pour vous connecter via pass et/ou login car votre email n'est pas votre nickname utilisateur docker !!!
 
-# - NOTE 3 :  Pass ou login requier toujours un couple (nickname utilisateur docker ; mot de passe) ou ( <token> ; leTokenenBase64 )(https://docs.docker.com/engine/reference/commandline/login/)[https://docs.docker.com/engine/reference/commandline/login/}
+- NOTE 3 :  Pass ou login requier toujours un couple (nickname utilisateur docker ; mot de passe) ou ( <token> ; leTokenenBase64 )(https://docs.docker.com/engine/reference/commandline/login/)[https://docs.docker.com/engine/reference/commandline/login/}
 
-# - NOTE 4 : Docker-Desktop peut aussi s'hautentifier à des dépots publics / ou privés autre que celui par defaut de docker (privé local, github,amazon ...) en faisant varier les methodes (ce serait d'avoir une liste d'exemple clefs en main car c'est vite galere et chronophage ...)
+- NOTE 4 : Docker-Desktop peut aussi s'hautentifier à des dépots publics ou privés autre que celui par defaut de docker (privé local, github, amazon ...) en faisant varier les methodes ( note ce serait d'avoir une liste d'exemple clefs en main car c'est chronophage de chercher et tester ...)
+
+Exemples d(non verifiés !!!) de ```.docker/config.json``` 
+
+```json
+{
+        "auths": {
+                "https://index.docker.io/v1/": {auth": "ZGtyX3BhdF9FWEVNUExFX0ZJQ1RJRl8xMjM0NTY3ODkw"}
+        },
+        "credsStore": "desktop",
+        "currentContext": "desktop-linux",
+        "plugins": {
+                "-x-cli-hints": {
+                        "enabled": "true"
+                }
+        }
+}
+```
+
+```json
+{
+        "auths": {},
+        "credsStore": "pass","desktop",
+        "currentContext": "desktop-linux",
+        "plugins": {
+                "-x-cli-hints": {
+                        "enabled": "true"
+                }
+        }
+}
+```
 
 
 
+Autre provenant de https://dev.to/mattdark/docker-setting-up-a-credential-helper-4nbh
+
+```json
+{
+        "auths": {},
+        "currentContext": "desktop-linux",
+        "auth": "ZGtyX3BhdF9FWEVNUExFX0ZJQ1RJRl8xMjM0NTY3ODkw"
+        "plugins": {
+                "-x-cli-hints": {
+                        "enabled": "true"
+                }
+        }
+}
+```
+
+Exemple sous windows :
+```json
+{
+  "auths": {
+    "https://index.docker.io/v1/": {}
+  },
+  "credsStore": "desktop.exe"
+}
+```
 
 
+```json
+{
+        "auths": {
+                "https://index.docker.io/v1/":{} },
+        "credsStore": "desktop",
+        "currentContext": "desktop-linux",
+        "auth": "ZGtyX3BhdF9FWEVNUExFX0ZJQ1RJRl8xMjM0NTY3ODkw"
+        "plugins": {
+                "-x-cli-hints": {
+                        "enabled": "true"
+                }
+        }
+}
+```
+
+```json
+{
+       "auths": {
+                "https://index.docker.io/v1/": {"auth": "ZGtyX3BhdF9FWEVNUExFX0ZJQ1RJRl8xMjM0NTY3ODkw"}
+                },
+        "credsStore": "desktop",
+        "currentContext": "desktop-linux",
+        "plugins": {
+                "-x-cli-hints": {
+                        "enabled": "true"
+                }
+        }
+}
+```
+
+...
 
 
 -------
 
+
 **Dépannage :**
 - Erreurs d'authentification : Vérifiez que le PAT est valide et non expiré. Régénérez-le si nécessaire.
   
-- Limite de jetons atteinte : Supprimez les anciens jetons via l'interface web de Docker Hub.
+- Limite de jetons atteinte : Supprimez les anciens jetons via l'interface web de Docker Hub, en version gratuite vous avez droit au maximu à 5 tokens permanents voir sur votre nickname onglet **security** pour gerer vos tokens PAT.
   
 - Problèmes de contexte : Si les commandes échouent, vérifiez le contexte avec docker context ls et définissez-le sur desktop-linux avec docker context use desktop-linux.
 
