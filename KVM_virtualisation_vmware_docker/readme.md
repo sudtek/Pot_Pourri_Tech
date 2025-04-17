@@ -17,17 +17,16 @@ pour l'authentification. Au besoin je vous invite à vous reporter à la procedu
 - Stockage VM : Au moins 20 Go d'espace disque libre.
 - Réseau : Connexion Internet stable pour les téléchargements de paquets et l'authentification Docker Hub.
 
-**Note : Vérifiez que votre CPU supporte la virtualisation imbriquée et que celle-ci est activée dans le BIOS. Utilisez vmware -v ou consultez les journaux VMware si la VM ne démarre pas.**
+**Note : Vérifiez que votre CPU supporte la virtualisation imbriquée et que celle-ci est activée dans le BIOS de l'hote (w10) et de l'invité (Lubuntu) dans le bios vmware  (consultez les journaux VMware ```vmware -v``` si la VM ne démarre pas)**
 
 # Étape 1 : Résoudre les conflits Hyper-V sous Windows #
 
-Hyper-V bloque la virtualisation nécessaire à KVM.
-Suivez ces étapes pour le désactiver complètement :
+Par défaut Hyper-V bloque la virtualisation nécessaire à KVM. Suivez ces étapes pour désactiver complètement la prise en charge de la virtualisation par Hyper-V :
 
 ## 1.  Désactiver Hyper-V via l'interface graphique : ##
 
-- Ouvrez **"Panneau de configuration"** -> **"Programmes et fonctionnalités"** -> **"Activer / désactiver des fonctionnalités Windows"**.
-- Décochez toutes les options Hyper-V (y compris "Plateforme Hyper-V" et "Outils de gestion Hyper-V").
+- Sous windows ouvrez **"Panneau de configuration"** -> **"Programmes et fonctionnalités"** -> **"Activer / désactiver des fonctionnalités Windows"**.
+- Décochez toutes les options Hyper-V (y compris "**Plateforme Hyper-V**" et "**Outils de gestion Hyper-V**").
 - Cliquez sur OK et redémarrez le système.
 
 ## 2.  Vérifier l'état d'Hyper-V : ##
@@ -91,8 +90,8 @@ kvm-ok
 Exemple de retour terminal :
 
 ```bash
-$kvm_intel             286720  0
-$kvm                   663552  1 kvm_intel
+$ INFO: /dev/kvm exists
+$ KVM acceleration can be used
 ```
 
 - Cherchez kvm_intel ou kvm_amd dans la sortie de lsmod.
@@ -114,11 +113,7 @@ ls -al /dev/kvm
 - Assurez-vous que ```/dev/kvm``` existe avec des permissions comme ```crw-rw----+ 1 root kvm 10, 232 janv. 22 03:32 /dev/kvm```.
 - Déconnectez-vous et reconnectez-vous pour appliquer les changements de groupe.
 
-Dépannage : Si ```/dev/kvm``` est absent ou inaccessible, vérifiez si le module kvm est chargé ```lsmod | grep kvm```. Rechargez le module si nécessaire ou réinstallez qemu-kvm avec ```sudo apt install qemu-kvm``` ou ajoutez votre utilsateur au groupe kvm pour acceder au device :
-
-```bash
-sudo usermod -aG kvm $USER
-```
+Dépannage : Si ```/dev/kvm``` est absent ou inaccessible, vérifiez si le module kvm est chargé ```lsmod | grep kvm```. Rechargez le module si nécessaire ou réinstallez qemu-kvm avec ```sudo apt install qemu-kvm``` ou ajoutez votre utilisateur au groupe kvm pour acceder au device : ```sudo usermod -aG kvm $USER ```
 
 # Étape 3 : Installer Docker Desktop sur Lubuntu #
 
