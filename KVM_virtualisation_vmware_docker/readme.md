@@ -1,11 +1,9 @@
 # Installation de Docker Desktop sur Lubuntu 22.04 LTS (VM avec KVM sous VMware) #
 
-Version 0.1 du 17/avril/2025
+Version 0.1 du 17 / avril / 2025.
 
-Ce guide explique étape par étape comment installer Docker Desktop sur une machine virtuelle (VM) Lubuntu 22.04 LTS utilisant KVM, hébergée sur VMware Workstation 16.1 sous Windows 10. Il traite des problèmes courants, comme les conflits avec Hyper-V, et intègre des mesures de sécurité pour protéger les jetons d'accès personnels (PAT) utilisés
-pour l'authentification.
-
-Au besoin je vous invite à vous reporter à la procedure du (18_février_2024 installation de Docker_Desktop en VM Linux avec KVM sous Vmware.txt)[] qui a permis d'élaborer ce tutoriel.
+Ce guide explique étape par étape comment installer Docker Desktop sur une machine virtuelle (VM) Lubuntu 22.04 LTS utilisant KVM, hébergée sur VMware Workstation V16.1 sous Windows 10. Il traite des problèmes courants, comme les conflits avec Hyper-V, et intègre des mesures de sécurité pour protéger les jetons d'accès personnels (PAT) utilisés
+pour l'authentification. Au besoin je vous invite à vous reporter à la procedure du [18_février_2024 installation de Docker_Desktop en VM Linux avec KVM sous Vmware.txt](https://github.com/sudtek/Pot_Pourri_Tech/blob/8bded9d2f8e62aa876f6a1ada6811fa2d57204c7/KVM_virtualisation_vmware_docker/18_f%C3%A9vrier_2024%20installation%20de%20Docker_Desktop%20en%20VM%20Linux%20avec%20KVM%20sous%20Vmware.txt) qui a permis d'élaborer ce tutoriel.
 
 # Prérequis #
 
