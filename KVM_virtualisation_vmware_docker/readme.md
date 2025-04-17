@@ -1,15 +1,20 @@
 # Installation de Docker Desktop sur Lubuntu 22.04 LTS (VM avec KVM sous VMware) #
 
-Ce guide explique étape par étape comment installer Docker Desktop sur une machine virtuelle (VM) Lubuntu 22.04 LTS utilisant KVM, hébergée sur VMware Workstation 16.1 sous Windows 10. Il traite des problèmes courants, comme les conflits avec Hyper-V, et intègre des mesures de sécurité pour protéger les jetons d\'accès personnels (PAT) utilisés
+Version 0.1
+17/avril/2025 
+
+Ce guide explique étape par étape comment installer Docker Desktop sur une machine virtuelle (VM) Lubuntu 22.04 LTS utilisant KVM, hébergée sur VMware Workstation 16.1 sous Windows 10. Il traite des problèmes courants, comme les conflits avec Hyper-V, et intègre des mesures de sécurité pour protéger les jetons d'accès personnels (PAT) utilisés
 pour l'authentification.
+
+Au besoin je vous invite à vous reporter à la procedure du (18_février_2024 installation de Docker_Desktop en VM Linux avec KVM sous Vmware.txt)[] qui a permis d'élaborer ce tutoriel.
 
 # Prérequis #
 
-- OS Hôte : Windows 10 Professionnel (Build 19045 ou supérieur)
+- OS Hôte : Windows 10 Professionnel (Build 19045 ou supérieur) (note : Non testé sur win11)
 - Hyperviseur : VMware Workstation 16.1 ou version ultérieure
-- OS VM : Lubuntu 22.04 LTS (Jammy Jellyfish, installation propre et jour)
+- OS VM : Lubuntu 22.04 LTS (Jammy Jellyfish, installation propre et à jour)
 - BIOS : Virtualisation activée (Intel VT-x/AMD-V)
-- CPU Hôte : Intel64 Family 6 Model 58 (ou équivalent) avec support de la virtualisation
+- CPU Hôte : Intel64 Family 6 Model 58 (équivalent ou supérieur) avec instructions pour support de la virtualisation
 - Paramètres CPU VM : Activer "**Virtualize Intel VT-x/EPT** OU **AMD-V/RVI**" ET "**Virtualize IOMMU**" dans le fichier .vmx de la VM ou les paramètres VMware
 - Mémoire VM : Minimum 4 Go (8 Go recommandés pour de meilleures performances)
 - Stockage VM : Au moins 20 Go d'espace disque libre.
@@ -19,7 +24,7 @@ pour l'authentification.
 
 # Étape 1 : Résoudre les conflits Hyper-V sous Windows #
 
-Hyper-V peut bloquer la virtualisation imbriquée nécessaire à KVM.
+Hyper-V bloque la virtualisation nécessaire à KVM.
 Suivez ces étapes pour le désactiver complètement :
 
 ## 1.  Désactiver Hyper-V via l'interface graphique : ##
@@ -30,8 +35,8 @@ Suivez ces étapes pour le désactiver complètement :
 
 ## 2.  Vérifier l'état d'Hyper-V : ##
 
-- Exécutez systeminfo dans l'Invite de commandes et vérifiez la section "Exigences Hyper-V". Elle doit indiquer qu'aucun hyperviseur n'est détecté.
-- Sinon, ouvrez msinfo32 et assurez-vous que \"Sécurité basée sur la virtualisation\" est Non actif.
+- Exécutez ```systeminfo``` dans l'invité de commandes windows et vérifiez la section "**Exigences Hyper-V**". Elle doit indiquer qu'aucun hyperviseur n'est détecté !
+- Sinon, ouvrez ```msinfo32``` et assurez-vous que "**Sécurité basée sur la virtualisation**" est Non actif.
 
 ## 3.  Désactiver le lancement de l'hyperviseur (CMD en mode administrateur) : ##   
 
@@ -85,21 +90,38 @@ sudo modprobe kvm_amd
 
 ```bash
 kvm-ok
-lsmod | grep kvm
+```
+Exemple de retour terminal :
+
+```bash
+$kvm_intel             286720  0
+$kvm                   663552  1 kvm_intel
 ```
 
 - Cherchez kvm_intel ou kvm_amd dans la sortie de lsmod.
+```bash
+lsmod | grep kvm
+```
+Exemple de retour terminal :
 
-## 4.  Configurer les permissions utilisateur : ##
+```bash
+$ kvm_intel             286720  0
+$ kvm                   663552  1 kvm_intel
+```
+
+## 4.  Vérifier / Configurer les permissions utilisateur de KVM : ##
+
+```bash
+ls -al /dev/kvm
+```   
+- Assurez-vous que ```/dev/kvm``` existe avec des permissions comme ```crw-rw----+ 1 root kvm 10, 232 janv. 22 03:32 /dev/kvm```.
+- Déconnectez-vous et reconnectez-vous pour appliquer les changements de groupe.
+
+Dépannage : Si ```/dev/kvm``` est absent ou inaccessible, vérifiez si le module kvm est chargé ```lsmod | grep kvm```. Rechargez le module si nécessaire ou réinstallez qemu-kvm avec ```sudo apt install qemu-kvm``` ou ajoutez votre utilsateur au groupe kvm pour acceder au device :
 
 ```bash
 sudo usermod -aG kvm $USER
-ls -al /dev/kvm
-```   
-- Assurez-vous que ```/dev/kvm``` existe avec des permissions comme ```crw-rw----+ 1 root kvm```.
-- Déconnectez-vous et reconnectez-vous pour appliquer les changements de groupe.
-
-Dépannage : Si ```/dev/kvm``` est absent ou inaccessible, vérifiez si le module kvm est chargé ```lsmod | grep kvm```. Rechargez le module si nécessaire ou réinstallez qemu-kvm avec ```sudo apt install qemu-kvm```.
+```
 
 # Étape 3 : Installer Docker Desktop sur Lubuntu #
 
@@ -113,21 +135,21 @@ sudo apt install gnome-terminal
 ```
 - gnome-terminal est requis pour les environnements de bureau non-GNOME comme LXQt de Lubuntu.
 
-## 2.  Configurer le dépôt Docker : ##
+## 2.  Configurer le dépôt Docker (clé GPG officielle de Docke + Ajouter le dépôt) : ##
 
 ```bash
 sudo apt install ca-certificates curl gnupg
 sudo install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 sudo chmod a+r /etc/apt/keyrings/docker.gpg
-echo "deb [arch=$(dpkg --print-architecture) igned-by=/etc/apt/keyrings/docker.gpg]
-https://download.docker.com/linux/ubuntu \$(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee
-/etc/apt/sources.list.d/docker.list > /dev/null
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 sudo apt update
 ```
+
 ## 3.  Télécharger et installer Docker Desktop : ##
 
-- Téléchargez le dernier paquet .deb (par exemple, version 4.26.1) :
+- Téléchargez le dernier paquet .deb (par exemple, version 4.26.1 au 18/février/2024) :
 
 ```bash
 wget https://desktop.docker.com/linux/main/amd64/docker-desktop-4.26.1-amd64.deb
