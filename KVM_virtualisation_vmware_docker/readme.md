@@ -307,15 +307,15 @@ pass init
 pass insert docker-credential-desktop
 ```
 
-- NOTE 1 : Chaque tentative d'authentification ajoute automatiquement un token sur le site web de docker (https://hub.docker.com/signup)[https://hub.docker.com/signup] sauf qu'on est limité à 5 token maximum !!! Cela implique de faire le menage régulierement à la main (voir onglet security du site).
+- **NOTE 1** : Chaque tentative d'authentification ajoute automatiquement un token sur le site web de docker (https://hub.docker.com/signup)[https://hub.docker.com/signup] sauf qu'on est limité à 5 token maximum !!! Cela implique de faire le menage régulierement à la main (voir onglet security du site).
 
-- NOTE 2 : ATTENTION pour pass et / ou via la commande login; il faut imperativement utiliser la même typo que le nickname utilisateur docker (sensible à la case) qui apparait lorsque l'on se connecte à l'interface web de docker mais ne pas utiliser votre Email pour vous connecter via pass et/ou login car votre email n'est pas votre nickname utilisateur docker !!!
+- **NOTE 2** : ATTENTION pour pass et / ou via la commande login; il faut imperativement utiliser la même typo que le nickname utilisateur docker (sensible à la case) qui apparait lorsque l'on se connecte à l'interface web de docker mais ne pas utiliser votre Email pour vous connecter via pass et/ou login car votre email n'est pas votre nickname utilisateur docker !!!
 
-- NOTE 3 :  Pass ou login requier toujours un couple (nickname utilisateur docker ; mot de passe) ou ( <token> ; leTokenenBase64 )(https://docs.docker.com/engine/reference/commandline/login/)[https://docs.docker.com/engine/reference/commandline/login/}
+- **NOTE 3** :  Pass ou login requier toujours un couple (nickname utilisateur docker ; mot de passe) ou ( <token> ; leTokenenBase64 )(https://docs.docker.com/engine/reference/commandline/login/)[https://docs.docker.com/engine/reference/commandline/login/]
 
-- NOTE 4 : Docker-Desktop peut aussi s'hautentifier à des dépots publics ou privés autre que celui par defaut de docker (privé local, github, amazon ...) en faisant varier les methodes ( note ce serait d'avoir une liste d'exemple clefs en main car c'est chronophage de chercher et tester ...)
+- **NOTE 4** : Docker-Desktop peut aussi s'hautentifier à des dépots publics ou privés autre que celui par defaut de docker (privé local, github, amazon ...) en faisant varier les methodes ( Ce serait d'avoir une liste d'exemples clefs en main car c'est chronophage de chercher et tester chaque cas ...)
 
-Exemples d(non verifiés !!!) de ```.docker/config.json``` 
+Exemples (non verifiés !!!) de ```.docker/config.json``` 
 
 ```json
 {
@@ -403,7 +403,7 @@ Exemple sous windows :
 }
 ```
 
-...
+ect ...
 
 
 -------
