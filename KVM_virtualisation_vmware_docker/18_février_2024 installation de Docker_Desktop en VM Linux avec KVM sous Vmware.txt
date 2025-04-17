@@ -1,0 +1,304 @@
+# 18 fevrier 2024 V03
+# 
+# BUT : INSTALLER de DOCKER DESKTOP sur une VM lubuntu V20.04LTS jammy + KVM
+#
+# BIOS : Options de virtualisations activées
+# CPU : 1 processeur(s) installé(s) Intel64 Family 6 Model 58 Stepping 9 GenuineIntel ~3401 MHz
+# HOTE_OS : Microsoft Windows 10 Professionnel
+# Hote_Version_système : 10.0.19045 N/A build 19045
+# HOTE_option : windows hyperv desactivé
+# hyperviseur : vmware workstation V16.1
+# VM_OS : Ubuntu V22.04LTS (mis à jour propre)
+# VM_CPU_option : Virtualize Intel VT-X/EPT + Virtualize IOMMU (Vérifier .VMX)
+# VM_MEM_SIZE : 4 Go
+#----------------------------------------------------------------
+
+ 
+# !!!!!!! ATTENTION IMPORTANT POUR LES MACHINES HOTES SOUS WINDOWS : Procedure a effectuer en prioritée pour permettre le boot des Vms dans hyperviseur vmware workstation 16 avec WINDOWS 7,8,10,11 et pouvoir installer et utiliser KVM dans la VM
+# !!!!!!! "If you are trying to install it in a virtual machine, you need nested virtualization enabled -> Docker Desktop runs a VM that requires KVM support"
+# !!!!!!! https://docs.docker.com/desktop/install/linux-install/#kvm-virtualization-support
+# !!!!!!! 
+# !!!!!!! ATTENTION GROS PB avec VT-X ou AMD-V lié à l'hyverviseur hyperV hote windows 8,10,11 qui bloque volontairement le boot des VMs sous vmware workstation si les fonctions VTX / AMD V sont activées au BIOS vmware. Ces fonctions CPU vmware doivent être imperativement activées elles sont indispensables pour pouvoir utiliser KVM (ou autres) dans une VM (options de CPU activées .vmx de la VM dans VMWARE  :
+# !!!!!!! Virtualize Intel VT-X/EPT OU AMD-V/RVI
+# !!!!!!! Virtualize IOMMU
+# !!!!!!! Il faut prioritairement exécuter cette procedure sous windows pour desactiver completement hyperV et ainsi pouvoir lancer la VM via VMWARE :
+# !!!!!!! Source youtube https://www.youtube.com/watch?v=6f1Qckg2Zx0
+# !!!!!!! Hyperv de windows bloque l'activation des option vt-x / AMD-V dans les VMs de vmware workstation -> impossible de demarer la VM est de profiter de KVM dans la VM invitée
+# !!!!!!! Virtualize Intel VT-X/EPT or AMD-V/RVI
+# !!!!!!! Virtualize IOMMU
+# !!!!!!! VMware Workstation as a hypervisor Operating System: Windows 10
+# !!!!!!!
+# !!!!!!! DEBUT PROCEDURE 
+# !!!!!!! 1. Desactiver Hyper-V via le GUI windows et redemarer le systeme.
+# !!!!!!! "programme et fonctionalitées"->"Activer ou desactiver des fonctionalitées"->hyper-V (on decoche tout hyperv suivi d'un REBOOT)
+# !!!!!!! 
+# !!!!!!! 2. Verifer si le status Hyper-V est bien OFF via systeminfo et msinfo32.
+# !!!!!!! 
+# !!!!!!! 3. Desactiver en mode ADMINISTRATEUR le lancement de l'hyperviseur de l'hote windows via la console CMD !
+# !!!!!!! 
+# !!!!!!! bcdedit /set hypervisorlaunchtype off
+# !!!!!!! 
+# !!!!!!! 4. En mode ADMINISTRATEUR SUPRIMER toutes les fonctionalitées Hyper-V via powershel en mode ADMINISTRATEUR !
+# !!!!!!! 
+# !!!!!!! Disable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All
+# !!!!!!! 
+# !!!!!!! 5. Faire un REBOOT
+# !!!!!!! 
+# !!!!!!! FIN PROCEDURE DESACTIVATION HYPERV du systéme hote.
+
+
+
+
+# ---- Procedure d'installation de "KVM" dans la VM invitée Lubuntu" -----
+
+# Consulter la liste des prérequis du systémes hote et invité :  https://docs.docker.com/desktop/install/linux-install/#general-system-requirements
+
+# Source du support de virtualisation KVM dans la VM vmware : https://docs.docker.com/desktop/install/linux-install/#kvm-virtualization-support
+
+# Vérifier les capacités de votre CPU
+$ sudo apt install cpu-checker
+$ kvm-ok 
+# si la reponse est :
+# INFO: Your CPU does not support KVM extensions
+# INFO: For more detailed results, you should run this as root
+# HINT:   sudo /usr/sbin/kvm-ok
+# Alors hyperV sur l'hote windows bloque l'utilisation des extensions de virtualisation via hyperV ne pas aller plus loin et virer HYPERV via la procedure ci-dessus !!!!
+
+
+# On installe KVM dans la VM invité : 
+# Si Intel processors
+$ sudo modprobe kvm_intel
+# ou si vous avez un processeur AMD
+$ modprobe kvm_amd    # AMD processors
+
+# On Verifie que l'installation de KVM est éffective :
+$ kvm-ok 
+# INFO: /dev/kvm exists
+# KVM acceleration can be used
+# Tout est OK kvm est installé.
+
+# Vérifier si le module KVM est activé et tourne:
+$ lsmod | grep kvm
+# kvm_intel             286720  0
+# kvm                   663552  1 kvm_intel
+
+# Fixer les permisions utilisateurs sur les elements KVM  : https://docs.docker.com/desktop/install/linux-install/#set-up-kvm-device-user-permissions
+
+# Verification des droits /dev/kvm :
+$ ls -al /dev/kvm
+# crw-rw----+ 1 root kvm 10, 232 janv. 22 03:32 /dev/kvm
+
+# Ajouter de l'utilisateur courant au groupe kvm pour acceder au device kvm :
+sudo usermod -aG kvm $USER
+
+
+# ---- Prérequis à l'installation de "Docker desktop" dans une VM Lubuntu :  https://docs.docker.com/desktop/install/ubuntu/ -----
+
+# Prérequis https://docs.docker.com/desktop/install/ubuntu/#prerequisites
+# - Avoir un os 64-bit version LTS version (Ubuntu Jammy Jellyfish 22.04) ou non-LTS version (Ubuntu Mantic Minotaur 23.10). Docker Desktop est supporté on x86_64 (or amd64) architecture.
+# - Pour les environement non-Gnome Desktop, gnome-terminal doit être installé via :
+$ sudo apt install gnome-terminal
+
+# ---- Procédure d'installation d'installation de "Docker Desktop" dans la VM Lubuntu" ----- 
+# https://docs.docker.com/desktop/install/ubuntu/#install-docker-desktop
+
+# 1 Configurer le dépôt de paquets Docker : https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository
+
+# Faire un maj des la liste de paquets
+$ sudo apt-get update
+
+# Ajouter la clé GPG officielle de Docker :
+$ sudo apt-get install ca-certificates curl gnupg
+$ sudo install -m 0755 -d /etc/apt/keyrings
+$ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+$ sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+# Ajoutez le dépôt aux sources Apt :
+$ echo \
+$ "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+$ $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+$ sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+$ sudo apt-get update
+
+# Si vous utilisez une distribution alternative derivée d'Ubuntu exemple Linux Mint, vous devrez peut être utilisé la variable UBUNTU_CODENAME en lieu et place de la variable VERSION_CODENAME.
+# Ca fonctionne de base avec LUBUNTU ou UBUNTU mais attention avec certaines autres variantes il peut y avoir d'autres modifications 
+
+# Procédure pour installer le dernier paquet Debian DEB (406MB). https://docs.docker.com/engine/install/ubuntu/#install-from-a-package. 
+
+# Télécharger la derniere version du paquet Important !!!
+# Lien https://desktop.docker.com/linux/main/amd64/docker-desktop-4.26.1-amd64.deb?utm_source=docker&utm_medium=webreferral&utm_campaign=docs-driven-download-linux-amd64
+$ wget https://desktop.docker.com/linux/main/amd64/docker-desktop-4.26.1-amd64.deb?utm_source=docker&utm_medium=webreferral&utm_campaign=docs-driven-download-linux-amd64
+
+# Mise à jour
+$ sudo apt-get update
+# sudo apt-get install ./docker-desktop-<version>-<arch>.deb
+$ sudo apt-get install ./docker-desktop-4.26.1-amd64.deb
+
+# Attention il faut bien comprendre que Docker Desktop est Docker sont deux programmes au CONTEXTES differents et indépendants.
+# On peut installer l'un et / ou l'autre sur la même machine. 
+# Donc installer et utiliser "Docker Desktop" ne requiert pas d'avoir préalablement installer Docker standalone et vice verca.
+# Docker-Desktop intégre un binaire Docker mais ce n'est pas le même que si vous aviez installé Docker d'ou la notion de contexte ! 
+
+
+# On verifie la liste des packages installés dans ubuntu par le paquet debian :
+$ dpkg --get-selections | grep -i docker
+
+# 3 binaires sont maintenant disponibles dans notre VM 
+# docker
+# docker-credential-desktop
+# docker-index 
+
+# Verifications des versions installées
+$ docker -v
+# Docker version 25.0.0, build e758fe5
+
+$ docker-credential-desktop version
+# docker-credential-desktop (github.com/docker/docker-credential-helpers) v0.7.0
+
+$ docker-index version
+# version: v0.0.35 (go1.19.6 - linux/amd64)
+# git commit: ec13fbbed3010abbd8dd3cca7d4f6952bafb2ba4
+
+# Lancement de docker-Desktop :
+# Via le raccourci dans Menu->Programation->Dockerdesktop qui pointe /usr/share/applications/docker-desktop.desktop
+# Via la commande:
+$ systemctl --user start docker-desktop
+
+# Attention si au lancement de Docker-desktop vous obtenez le message d'erreur -> "KVM virtualization support NEED !!" c'est que KVM est mal installé. 
+# Vous ne pourrez pas lancer Docker-Desktop 
+# Voir plus haut section KVM ou bien doc docker https://docs.docker.com/desktop/install/ubuntu/#launch-docker-desktop
+
+# Le 1er lancement de Docker-desktop va automatiquement créer un repertoire caché ~/.docker$ dans le répertoire utilisateur
+# Faire une copie de sauvegarde du fichier ~/.docker/config.json 
+$ cp ~/.docker/config.json ~/.docker/config.SAV
+
+# Le fichier config.json va de base ouvrir votre browseur web par defaut pour faire un signin et s'hautentifer sur le site officiel de docker.
+# ATTENTION en version gratuite vous avez droit au maximu à 5 tokens permanents donc via l'interface web il vous faudra supprimer les token autogenerés et créer des token préafectés sinon vous aurez des pbs
+# connections lié à l'authentification. Dans l'interface web cliquer sur votre nickname onglet "security" pour gerer les tokens.
+
+$ cat ~/.docker/config.json{
+        "auths": {},
+        "credsStore": "desktop",
+        "currentContext": "desktop-linux"
+		}
+
+# ATTENTION j'attire particulierement votre attention sur "currentContext": "desktop-linux" qui explicitement stipule que nous ne sommes pas sous le context docker (mais les deux peuvent coahbiter). 
+
+# La directive "credsStore": "desktop" forcera l'ouverture d'une page web pour vous authentifier et vous renvoyer au Dashboard local de l'application Docker-desktop.
+
+# Docker-Desktop peut utiliser le gestionaire de mot de passe nommé pass https://www.passwordstore.org/ basé sur gpg sous linux mais c'est pas obligatoire. Note : il existe d'autres méthodes.
+$ which pass
+#/usr/bin/pass
+
+# Dans ce cas la config.json devra avoir la directive 
+config.json{
+        "auths": {},
+        "credsStore": "pass","desktop",
+        "currentContext": "desktop-linux"
+        }
+
+# Voir https://docs.docker.com/desktop/get-started/#credentials-management-for-linux-users
+
+# NOTE 1 : Chaque tentative d'authentification ajoute automatiquement un token sur le site web de docker https://hub.docker.com/signup sauf que l'on est limité à 5 token maximum !!! Cela implique de faire le menage à la mano (voir onglet security du site).
+# NOTE 2 : ATTENTION pour pass et / ou via la commande login; il faut imperativement utiliser la même typo que le nickname utilisateur docker (sensible à la case) qui apparait lorsque l'on se connecte 
+# à l'interface web de docker mais ne pas utiliser votre Email pour vous connecter via pass et/ou login car votre email n'est pas votre nickname utilisateur docker !!!
+# Pass ou login requier toujours un couple (nickname utilisateur docker ; mot de passe) ou ( <token> ; leTokenenBase64 )
+# https://docs.docker.com/engine/reference/commandline/login/
+
+# Docker-Desktop peut aussi s'hautentifier à des dépots publics / ou privés autre que celui par defaut de docker (privé local, github,amazone ...) en faisant varier les methodes
+# Ce serait d'avoir une liste d'exemple clefs en main car c'est vite galere et chronophage ...
+
+Exemples à tester et verifer :
+-----------------------------------------------------
+{
+        "auths": {
+                "https://index.docker.io/v1/": {auth": "ZGtyX3BhdF9FWEVNUExFX0ZJQ1RJRl8xMjM0NTY3ODkw"}
+        },
+        "credsStore": "desktop",
+        "currentContext": "desktop-linux",
+        "plugins": {
+                "-x-cli-hints": {
+                        "enabled": "true"
+                }
+        }
+}
+-----------------------------------------------------
+
+# editer .docker/config.json  
+{
+        "auths": {},
+        "credsStore": "pass","desktop",
+        "currentContext": "desktop-linux",
+        "plugins": {
+                "-x-cli-hints": {
+                        "enabled": "true"
+                }
+        }
+}
+
+
+ 
+# echec test 01
+
+# Test02 utiliser un token (R/W) pregenere sur le site docker : dckr_pat_xxxxxxxxxxxxx-xxxx-xxxxxx
+$echo -n 'dckr_pat_xxxxxxxxxxxxx-xxxx-xxxxxx' | base64
+ZGtyX3BhdF9FWEVNUExFX0ZJQ1RJRl8xMjM0NTY3ODkw
+
+# https://dev.to/mattdark/docker-setting-up-a-credential-helper-4nbh
+# editer .docker/config.json  
+
+{
+        "auths": {},
+        "currentContext": "desktop-linux",
+        "auth": "ZGtyX3BhdF9FWEVNUExFX0ZJQ1RJRl8xMjM0NTY3ODkw"
+        "plugins": {
+                "-x-cli-hints": {
+                        "enabled": "true"
+                }
+        }
+}
+
+# //exemple sous windows 
+{
+  "auths": {
+    "https://index.docker.io/v1/": {}
+  },
+  "credsStore": "desktop.exe"
+}
+
+///
+{
+        "auths": {
+                "https://index.docker.io/v1/":{} },
+        "credsStore": "desktop",
+        "currentContext": "desktop-linux",
+        "auth": "ZGtyX3BhdF9FWEVNUExFX0ZJQ1RJRl8xMjM0NTY3ODkw"
+        "plugins": {
+                "-x-cli-hints": {
+                        "enabled": "true"
+                }
+        }
+}
+{
+       "auths": {
+                "https://index.docker.io/v1/": {"auth": "ZGtyX3BhdF9FWEVNUExFX0ZJQ1RJRl8xMjM0NTY3ODkw"}
+                },
+        "credsStore": "desktop",
+        "currentContext": "desktop-linux",
+        "plugins": {
+                "-x-cli-hints": {
+                        "enabled": "true"
+                }
+        }
+}
+
+
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+
+
+
+
+
