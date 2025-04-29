@@ -42,10 +42,12 @@ Options implicites :
 - Journalisation des erreurs automatique
 
 ## 📂 Structure des fichiers
+```
 ├── fre/               # Répertoire des PDFs (langue)
 ├── langues.htm        # Liste brute des langues
 ├── liste_langues.txt  # Langues disponibles
 └── liste_urls_PDF.txt # URLs des PDFs détectés
+```
 
 ## 🧹 Nettoyage
 Le script propose de supprimer automatiquement :
