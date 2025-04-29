@@ -1,4 +1,4 @@
-J'ai réguliérement besoin de recuperer diverses données (principalement des PDF), faire des mirroirs des sites webs de Jean-Pierre PETIT alias JPP ...
+J'ai réguliérement besoin de recuperer diverses données (principalement des PDF), faire des mirroirs des sites webs, ect ... de Jean-Pierre PETIT alias JPP.
 
 - [http://www.savoir-sans-frontieres.com/](http://www.savoir-sans-frontieres.com/)
 
