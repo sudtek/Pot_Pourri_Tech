@@ -31,16 +31,17 @@ cd DL_PDF_SSF
 chmod +x DL_PDF_SSF.sh
 ```
 # Lancer le script
+```bash
 ./DL_PDF_SSF.sh
+```
 
 ## 🚀 Utilisation
-# Options implicites :
-# - Téléchargement avec reprise (-c)
-# - Limitation de bande passante (--limit-rate=200k)
-# - Journalisation des erreurs automatique
+Options implicites :
+- Téléchargement avec reprise (-c)
+- Limitation de bande passante (--limit-rate=200k)
+- Journalisation des erreurs automatique
 
 ## 📂 Structure des fichiers
-
 ├── fre/               # Répertoire des PDFs (langue)
 ├── langues.htm        # Liste brute des langues
 ├── liste_langues.txt  # Langues disponibles
@@ -48,15 +49,12 @@ chmod +x DL_PDF_SSF.sh
 
 ## 🧹 Nettoyage
 Le script propose de supprimer automatiquement :
-
-Fichiers HTML temporaires
-
-Listes intermédiaires
-
-Fichiers de log
+- Fichiers HTML temporaires
+- Listes intermédiaires
+- Fichiers de log
 
 ## 💡 Notes
 Langue par defaut : Francais -> fre
 Langues disponibles : arabe (ara), ukrainien (ukr), vietnamien (vie), etc.
 
-Les PDFs sont hébergés sur savoir-sans-frontieres.com/JPP/telechargeables/
+Les PDFs sont hébergés sur (http://savoir-sans-frontieres.com/JPP/telechargeables/)[http://savoir-sans-frontieres.com/JPP/telechargeables/]
