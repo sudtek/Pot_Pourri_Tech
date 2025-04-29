@@ -3,10 +3,16 @@
 # 28_04_2025
 # version  0.2
 # yannick SUDRIE
-# Téléchargement de tous les pdf de Savoir Sans Frontières pour une langue donnée
+#
+# But : Script interactif pour Télécharger toutes les BD au format PDF de jean-pierre Petit pdf de Savoir Sans Frontières pour une langue donnée exemple fre
+# http://www.savoir-sans-frontieres.com 
+#
+# invocation :
+# ./DL_PDF_SSF.sh
+
 
 URL_SSF="http://www.savoir-sans-frontieres.com"
-DOWNLOAD_PATH="download"  # Renommé car PATH est réservé
+DOWNLOAD_PATH="download"
 FICHIER_HTM_LANGUES="langues.htm"
 FICHIER_LISTE_LANGUES="liste_langues.txt"
 LANGUE_DEFAUT="fre"
