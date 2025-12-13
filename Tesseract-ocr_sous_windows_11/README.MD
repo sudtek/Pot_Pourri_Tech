@@ -112,6 +112,11 @@ Vérif : Taille réduite + Ctrl+F (texte français copiable).
 | OCR bloqué 0% | Tesseract fail | Vérif TESSDATA_PREFIX + fichier fra ; `--jobs 1` pour debug. |
 | DL lent | Pas multi | `-x 16` sur aria2 ; manuel navigateur. |
 
-**Ressources :** [OCRmyPDF docs](https://ocrmypdf.readthedocs.io/en/latest/) ; [Tesseract Windows](https://github.com/UB-Mannheim/tesseract/wiki) ; Stack Overflow pour TESSDATA_PREFIX.
+
+## Ressources
+
+- [OCRmyPDF Documentation Officielle](https://ocrmypdf.readthedocs.io/en/latest/)
+- [Tesseract sous Windows](https://github.com/UB-Mannheim/tesseract/wiki)
+- [Stack Overflow pour TESSDATA_PREFIX](https://stackoverflow.com/questions/tagged/tesseract+windows)
 
 *Mis à jour : Décembre 2025. TESSDATA_PREFIX + jbig2 fix.* 
