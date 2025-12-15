@@ -123,5 +123,4 @@ Vérif : Taille réduite + Ctrl+F (texte français copiable).
 
 - 14 Décembre 2025 : TESSDATA_PREFIX + jbig2 fix. 
 
-- 15 Décembre 2025 : Ajout du fichier zip "tessdata light from freeocr.zip" contenant la version light de 11 langues EU attention de pas ecraser le modele fra  best par le light ! 
-* 
+- 15 Décembre 2025 : Ajout du fichier zip "tessdata light from freeocr.zip" contenant la version light de 11 langues EU attention de pas ecraser le modele fra  best par le light !* 
