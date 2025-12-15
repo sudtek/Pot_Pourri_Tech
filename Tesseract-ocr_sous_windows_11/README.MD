@@ -119,4 +119,9 @@ Vérif : Taille réduite + Ctrl+F (texte français copiable).
 - [Tesseract sous Windows](https://github.com/UB-Mannheim/tesseract/wiki)
 - [Stack Overflow pour TESSDATA_PREFIX](https://stackoverflow.com/questions/tagged/tesseract+windows)
 
-*Mis à jour : Décembre 2025. TESSDATA_PREFIX + jbig2 fix.* 
+*Mis à jour : 
+
+- 14 Décembre 2025 : TESSDATA_PREFIX + jbig2 fix. 
+
+- 15 Décembre 2025 : Ajout du fichier zip "tessdata light from freeocr.zip" contenant la version light de 11 langues EU attention de pas ecraser le modele fra  best par le light ! 
+* 
