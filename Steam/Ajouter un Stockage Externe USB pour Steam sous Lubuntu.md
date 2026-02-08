@@ -1,4 +1,3 @@
-```
 # Ajouter un Stockage Externe USB pour Steam sous Lubuntu
 
 **Date : 05 février 2026**  
@@ -238,3 +237,4 @@ flatpak install flathub com.github.tchx84.Flatseal -y
 Bonne installation et bon jeu ! 🎮
 
 N’hésitez pas à ouvrir une **issue** si quelque chose ne fonctionne pas sur votre configuration.
+
