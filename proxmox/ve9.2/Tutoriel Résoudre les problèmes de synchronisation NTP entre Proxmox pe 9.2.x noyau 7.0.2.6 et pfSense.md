@@ -41,7 +41,7 @@ time.google.com
 
 4. **Important** : Dans le champ **Interface**, sélectionnez **`All (recommended)`** pour que le service écoute sur toutes les interfaces.
 
-![](C:\Users\yannick%20sudrie\Desktop\proxmox\configuration_globale_NTP.png)
+![](https://github.com/sudtek/Pot_Pourri_Tech/blob/dc0006d2f1a470af3d5201bc76cc135566bcf63a/proxmox/ve9.2/png/configuration_globale_NTP.png)
 
 ### 1.2 Désactivation du KOD (Kiss-of-Death)
 
@@ -51,7 +51,7 @@ time.google.com
 
 3. Cliquez sur **Save** puis **Restart** en bas de la page
 
-![](C:\Users\yannick%20sudrie\Desktop\proxmox\configuration_globale_NTP_ACLs.png)
+![](https://github.com/sudtek/Pot_Pourri_Tech/blob/dc0006d2f1a470af3d5201bc76cc135566bcf63a/proxmox/ve9.2/png/configuration_globale_NTP_ACLs.png)
 
 
 
@@ -74,16 +74,12 @@ time.google.com
 
 4. Sauvegardez et appliquez les changements
 
-![](C:\Users\yannick%20sudrie\Desktop\proxmox\pare-feu_Regles_LAN.png)
-
+![](https://github.com/sudtek/Pot_Pourri_Tech/blob/dc0006d2f1a470af3d5201bc76cc135566bcf63a/proxmox/ve9.2/png/pare-feu_Regles_LAN.png)
 
 
 Vérifier que votre ntp a un pair actif actif sur pfsense :
 
-
-
-![NTP_Etat.png](C:\Users\yannick%20sudrie\Desktop\proxmox\NTP_Etat.png)
-
+![](https://github.com/sudtek/Pot_Pourri_Tech/blob/dc0006d2f1a470af3d5201bc76cc135566bcf63a/proxmox/ve9.2/png/NTP_Etat.png)
 ---
 
 ## 2. Configuration de chrony sur Proxmox (IPv4 uniquement)
