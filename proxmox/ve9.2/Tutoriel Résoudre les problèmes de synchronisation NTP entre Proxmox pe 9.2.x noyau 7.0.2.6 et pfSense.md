@@ -355,6 +355,8 @@ Le champ `System clock synchronized` doit indiquer `yes`.
 - [Documentation officielle chrony](https://chrony.tuxfamily.org/)
 
 - [Documentation pfSense NTP](https://docs.netgate.com/pfsense/en/latest/services/ntp.html)
+  
+- [Mise en oeuvre de pfSense NTP](https://doc.netwaze.fr/books/pfsense/page/cree-un-serveur-ntp-avec-pfsense)
 
 - [Proxmox Cluster Requirements](https://pve.proxmox.com/wiki/Cluster_Manager)
 
