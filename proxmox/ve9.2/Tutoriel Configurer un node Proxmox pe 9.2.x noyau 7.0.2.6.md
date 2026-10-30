@@ -54,7 +54,7 @@ Si ce n'est pas le cas, éditer `/etc/network/interfaces` pour y mettre cette 
 
 Désactiver **les paquets proxmox car ils nécessitent une licence payante** pour choisir la version contribution et faire direct un ajout des paquets communeautaires puis lancer une mise à jour !
 
-![](C:\Users\yannick%20sudrie\AppData\Roaming\marktext\images\2026-10-30-01-59-59-image.png)
+![](https://github.com/sudtek/Pot_Pourri_Tech/blob/696440952d431d6249999951c6f1d9db2602afea/proxmox/ve9.2/png/depots-nosubcription-proxmox.png)
 
 ```bash
  apt-get update
@@ -108,7 +108,7 @@ DAEMON_OPTS="-F 1 -4"
 
 ### Resolution de noms local via le fichiers hosts
 
-On ne peut pas s'appuyer / compter sur la resolution de nom du pfsense; s'il tombe on perd la resolution de nom dans le réseaux local ... donc il faut coder en dur les membres du cluster dans le fichier hosts  respectifs de chaque machine (exemple de host du node pve-proxmox-R7 ) :
+On ne peut pas s'appuyer / compter sur la resolution de nom du pfsense; s'il tombe on perd la resolution de nom dans le réseaux local ... donc il faut coder en dur les membres du cluster dans le fichier hosts respectifs de chaque machine (exemple de host du node pve-proxmox-R7 ) :
 
 ```bash
 cat /etc/hosts
