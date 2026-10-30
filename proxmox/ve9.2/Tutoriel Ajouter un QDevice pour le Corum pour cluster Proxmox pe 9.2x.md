@@ -2,7 +2,7 @@
 
 Le **QDevice** (avec le service **QNetd**) sert à fournir une voix supplémentaire au système de quorum d'un cluster Proxmox (particulièrement utile pour les clusters à 2 nœuds). Il s'installe sur une machine tierce indépendante (un Raspberry Pi, un petit serveur Debian/Ubuntu, un routeur compatible ou un VPS) (
 
-Note ! hormis pour un test il faut éviter de l'installer sur un autre hyperviseur type proxmox, vmware ... 
+**Note : Hormis pour un test il faut éviter de l'installer sur un autre hyperviseur type proxmox, vmware ...**
 
 ### 1. Préparer votre Raspberry Pi
 
