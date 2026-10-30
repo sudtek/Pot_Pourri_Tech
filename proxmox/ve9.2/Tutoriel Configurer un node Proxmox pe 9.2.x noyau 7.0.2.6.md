@@ -1,4 +1,4 @@
-# Tutoriel Configurer un node Proxmox pe 9.2.x noyau 7.0.2.6.md
+# Tutoriel : Configurer un node Proxmox pe 9.2.x noyau 7.0.2.6.md
 
 ### Configuration d'un node
 
