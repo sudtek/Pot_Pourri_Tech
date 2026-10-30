@@ -1,4 +1,4 @@
-# Tutoriel : ajouter un QDevice pour le corum Proxmox via machines tiers (RPI) !
+# Tutoriel : Ajouter un QDevice pour le corum Proxmox via machines tiers (RPI) !
 
 Le **QDevice** (avec le service **QNetd**) sert à fournir une voix supplémentaire au système de quorum d'un cluster Proxmox (particulièrement utile pour les clusters à 2 nœuds). Il s'installe sur une machine tierce indépendante (un Raspberry Pi, un petit serveur Debian/Ubuntu, un routeur compatible ou un VPS) (
 
