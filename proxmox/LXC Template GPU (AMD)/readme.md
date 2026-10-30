@@ -2,6 +2,14 @@
 
 
 
+Date : 23 octobre 2026
+
+OS : proxmox 9.2
+
+Autheur : Yannick SUDRIE
+
+
+
 ## 📋 Table des matières
 
 - À propos
@@ -131,7 +139,6 @@ bash
 lspci -nnk | grep -A 3 -iE 'vga|3d|display'
 
 # Attendu : "Kernel driver in use: amdgpu"
-
 ```
 
 # 2. Nœuds GPU présents ?
@@ -140,15 +147,11 @@ lspci -nnk | grep -A 3 -iE 'vga|3d|display'
 ls -l /dev/dri /dev/kfd
 ```
 
-
-
 # 3. Groupes render/video existants ?
 
 ```bash
 getent group render video
 ```
-
-
 
 # 4. Template Debian 13 disponible ?
 
@@ -156,15 +159,11 @@ getent group render video
 pveam list local | grep debian-13
 ```
 
-
-
 # 5. Storage rootfs disponible ?
 
 ```bash
 pvesm status
 ```
-
-
 
 ---
 
@@ -182,8 +181,6 @@ chmod +x LXC_TEMPLATE_GPU.sh
 
 ### Méthode 2 — Clone Git
 
-
-
 ```bash
 cd /root
 git clone https://github.com/<votre-user>/<votre-repo>.git lxc-template-gpu
@@ -192,8 +189,6 @@ chmod +x LXC_TEMPLATE_GPU.sh
 ```
 
 ### Vérification
-
-
 
 ```bash
 ./LXC_TEMPLATE_GPU.sh --help
@@ -205,8 +200,6 @@ chmod +x LXC_TEMPLATE_GPU.sh
 
 ### Syntaxe
 
-
-
 ```bash
 ./LXC_TEMPLATE_GPU.sh [options]
 ```
@@ -217,7 +210,6 @@ chmod +x LXC_TEMPLATE_GPU.sh
 # Création avec les valeurs par défaut (ID 999, DHCP, GPU auto-détecté)
 
 ./LXC_TEMPLATE_GPU.sh
-
 ```
 
 ### Exécution typique
@@ -235,7 +227,6 @@ chmod +x LXC_TEMPLATE_GPU.sh
 # Prévisualisation sans modification
 
 ./LXC_TEMPLATE_GPU.sh --dry-run --gpu
-
 ```
 
 ---
@@ -271,8 +262,6 @@ chmod +x LXC_TEMPLATE_GPU.sh
 ---
 
 ## 🔧 Ce que fait le script
-
-
 
 ```text
 ┌──────────────────────────────────────────────────────────────────┐
@@ -330,7 +319,6 @@ chmod +x LXC_TEMPLATE_GPU.sh
   --swap 512 \
   --cores 2 \
   --tags "template,gpu,igpu,lxc,debian13"
-
 ```
 
 ### Création avec IP statique
@@ -342,22 +330,18 @@ chmod +x LXC_TEMPLATE_GPU.sh
   --ip 10.10.10.150/24 \
   --gw 10.10.10.254 \
   --tags "template,test,gpu"
-
 ```
 
 ### Mode dry-run (prévisualisation)
 
 ```bash
 ./LXC_TEMPLATE_GPU.sh --dry-run --gpu --id 999
-
 ```
 
 ### Sans GPU (conteneur CPU-only)
 
 ```bash
-
 ./LXC_TEMPLATE_GPU.sh --no-gpu --id 300 --hostname cont-cpu
-
 ```
 
 ### Avec mot de passe root interactif
@@ -365,8 +349,6 @@ chmod +x LXC_TEMPLATE_GPU.sh
 ```bash
 ./LXC_TEMPLATE_GPU.sh --root-password --id 999
 ```
-
-
 
 ### Forcer l'écrasement d'un conteneur existant
 
@@ -403,7 +385,6 @@ chmod +x LXC_TEMPLATE_GPU.sh
 │  7. Sauvegarder le template maître                          │
 │     vzdump 999 --storage local --mode snapshot --compress zstd│
 └─────────────────────────────────────────────────────────────┘
-
 ```
 
 ### Vérification post-clone
@@ -442,7 +423,6 @@ ls -l /dev/dri/ /dev/kfd  # → GPU accessible
 ### Le GPU n'est pas détecté dans le conteneur
 
 ```bash
-
 # 1. Vérifier les nœuds dans le conteneur
 pct enter 999
 ls -l /dev/dri/ /dev/kfd
@@ -457,8 +437,6 @@ cat /etc/udev/rules.d/99-lxc-gpu-999.rules
 udevadm control --reload-rules && udevadm trigger
 ```
 
-
-
 ### Erreur "ID 999 déjà utilisé"
 
 ```bash
@@ -472,7 +450,6 @@ udevadm control --reload-rules && udevadm trigger
 ### Erreur "Aucun template Debian 13"
 
 ```bash
-
 # Télécharger le template
 pveam update
 pveam available --section system | grep debian-13
@@ -480,19 +457,16 @@ pveam download local debian-13-standard_13.6-1_amd64.tar.zst
 
 # Ou spécifier manuellement
 ./LXC_TEMPLATE_GPU.sh --template-os local:vztmpl/debian-13-standard_13.6-1_amd64.tar.zst
-
 ```
 
 ### Vulkan ne détecte pas le GPU
 
 ```bash
-
 # Dans le conteneur
 apt install -y vulkan-tools mesa-vulkan-drivers
 vulkaninfo --summary | grep -E "deviceName|deviceType"
 
 # Attendu : AMD Radeon Graphics (RADV RENOIR)
-
 ```
 
 ⚠️ **Piège `by-path`** : ne **jamais** utiliser les liens symboliques `by-path` pour le passthrough LXC. Le conteneur créerait un nœud au chemin littéral, et la découverte DRM/ROCm qui parcourt `/dev/dri/` ne trouverait rien. Le script utilise toujours les chemins directs `cardN` / `renderDN` / `kfd`.
@@ -531,8 +505,6 @@ $ cat /sys/class/kfd/kfd/dev         # → 510:0
 Un conteneur unprivileged mappe `root` → UID 100000 sur l'hôte. Les nœuds `/dev/dri/*` et `/dev/kfd` sont créés `0660 root:video` ou `root:render`. L'UID 100000 n'appartient pas à ces groupes → pas d'accès.
 
 `MODE="0666"` rend les nœuds accessibles à tous. Sur un hôte Proxmox mono-utilisateur, le compromis est acceptable.
-
-
 
 > ⚠️ **Bug documenté** : `KERNEL=="kfd", SUBSYSTEM=="drm"` est **FAUX**. Le bon subsystem est `kfd` (vérifiable avec `udevadm info -q property -n /dev/kfd | grep SUBSYSTEM`). Le script génère la bonne règle.
 
