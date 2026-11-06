@@ -1,4 +1,4 @@
-# Création automatisée d'un template LXC Proxmox avec passthrough GPU (iGPU AMD / carte dédiée)
+# Création automatisée d'un template LXC Proxmox avec passthrough GPU (iGPU AMD / carte dédiée) (AMD only, Intel/NVIDIA envisagés ...)
 
 
 
