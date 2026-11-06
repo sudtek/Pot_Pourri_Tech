@@ -2,7 +2,7 @@
 
 
 
-Date : 23 octobre 2026
+Date : 07 novembre 2026
 
 OS : proxmox 9.2
 
@@ -47,6 +47,9 @@ Autheur : Yannick SUDRIE
 ## 🎯 À propos
 
 Ce script Bash automatise la création d'un **conteneur LXC non privilégié** sur Proxmox VE, configuré avec le **passthrough GPU** (iGPU AMD Radeon ou carte dédiée) via `cgroup2` et bind mounts, puis converti en **template golden image** prêt à être cloné.
+
+Compatibilité actuelle : AMD iGPU/dGPU uniquement (testé sur Ryzen 7 5700U, iGPU Radeon Lucienne/Renoir).
+Envisagé (sans engagement) : Intel iGPU/Arc (architecture proche d'AMD, ajout probablement simple) et NVIDIA (architecture différente — devices /dev/nvidia*, userspace driver à synchroniser — pourrait passer par une VM plutôt qu'un LXC).
 
 Il résout les problèmes récurrents rencontrés lors de la configuration manuelle :
 
@@ -100,6 +103,8 @@ Il résout les problèmes récurrents rencontrés lors de la configuration manue
 - ✅ **Codes de sortie nominaux** pour diagnostic précis
 
 - ✅ **Logs colorés** avec contexte en cas d'erreur
+
+- ✅ **Conteneurs CPU-only** supportés (`--no-gpu`, ou auto-fallback si aucun GPU détecté)
 
 ---
 
@@ -537,6 +542,19 @@ Ce script est le point d'entrée d'une série de guides :
 | **`CONTAINER-MAITRE-VIERGE-R7-IGPU.md`** | Template golden image, reset machine-id/SSH, workflow de clone, bonnes pratiques      |
 
 Ces documents seront poussés dans le dépôt `docs` séparément.
+
+---
+
+## 🗺️ Roadmap (non contractuelle)
+
+| Vendor | Statut | Notes |
+|--------|--------|-------|
+| **AMD iGPU/dGPU** | ✅ Supporté (v1.0) | Testé sur Radeon Lucienne (Ryzen 7 5700U) |
+| **Intel iGPU/Arc** | 🔮 Envisagé | Modèle proche d'AMD (`/dev/dri` + Mesa), adapter probablement court |
+| **NVIDIA** | 🔮 Envisagé | Architecture différente (`/dev/nvidia*`, major dynamique pour `nvidia-uvm`, userspace driver à matcher avec l'hôte). La communauté recommande souvent une VM. |
+| **Sans GPU** | ✅ Supporté | Via `--no-gpu`, ou automatiquement si aucun `/dev/dri` détecté |
+
+Les contributions d'adapters Intel ou NVIDIA sont bienvenues (voir [Contribution](#-contribution)).
 
 ---
 
