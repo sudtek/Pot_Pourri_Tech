@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # =============================================================================
-# LXC_TEMPLATE_GPU.sh — Création automatisée d'un template LXC Proxmox
+# LXC_CREATE_TEMPLATE.sh — Création automatisée d'un template LXC Proxmox
 #                       avec passthrough GPU (iGPU AMD / carte dédiée).
 #
-# 23 octobre 2026 
-# Version 1.0
+# 07 novembre 2026 V1.1
+# 23 octobre 2026 V1.0
 #
 # RÉSUMÉ
 # ------
@@ -27,7 +27,7 @@
 #
 # INVOCATION
 # ----------
-#   ./LXC_TEMPLATE_GPU.sh [options]
+#   ./LXC_CREATE_TEMPLATE.sh [options]
 #
 # Options :
 #   --id N              ID du conteneur (défaut : 999)
@@ -54,10 +54,10 @@
 #   -h, --help          Cette aide
 #
 # Exemples :
-#   ./LXC_TEMPLATE_GPU.sh
-#   ./LXC_TEMPLATE_GPU.sh --id 999 --hostname master-r7-igpu
-#   ./LXC_TEMPLATE_GPU.sh --id 205 --ip 10.10.10.150/24 --gw 10.10.10.254
-#   ./LXC_TEMPLATE_GPU.sh --dry-run --gpu
+#   ./LXC_CREATE_TEMPLATE.sh
+#   ./LXC_CREATE_TEMPLATE.sh --id 999 --hostname master-r7-igpu
+#   ./LXC_CREATE_TEMPLATE.sh --id 205 --ip 10.10.10.150/24 --gw 10.10.10.254
+#   ./LXC_CREATE_TEMPLATE.sh --dry-run --gpu
 #
 # =============================================================================
 # Convention de codes de sortie (à graver)
@@ -70,8 +70,24 @@
 # 5	Config GPU a échoué	die gpu
 # 6	Reset machine-id a échoué	die reset
 # 7	pct template a échoué	die template
-# 255	Réservé : erreur non gérée (ne devrait jamais apparaître après ce patch)   
+# 255	Réservé : erreur non gérée (ne devrait jamais apparaître après ce patch)
 # =============================================================================
+#
+# 07_novembre_2026 ->Version 1.1
+
+# Récapitulatif des corrections
+#
+# Priorité	Bug	Impact
+# 1	🔴 P0	Dry-run affiche les étapes GPU même avec --no-gpu	Le script ment ->OK
+# 2	🔴 P0	Tags gpu,igpu restent même sans GPU	Métadonnées incorrectes ->OK
+# 3	🔴 P0	--searchdomain accepté mais jamais transmis	Footgun silencieux ->OK
+# 4	🟠 P1	pvesm status --content vztmpl (probablement invalide)	Auto-détection biaisée vers local -> non-bug : Le filtre --content vztmpl fait son travail : il exclut les storages qui ne peuvent pas contenir de templates (dont local-zfs). C'est une feature, pas un bug !
+# 5	🟠 P1	--root-password cassé par run_step	Prompt invisible ->OK
+# 6	🟠 P1	cleanup_on_error ne démonte pas le rootfs	Mount orphelin ->OK
+# 7	🟡 P2	Aucune validation des args entiers	Erreurs cryptiques ->OK
+#
+# =============================================================================
+
 
 set -euo pipefail
 
@@ -134,7 +150,7 @@ die_template() { die "$1" "$EXIT_TEMPLATE"; }
 
 SCRIPT_NAME="$(basename "$0")"
 readonly SCRIPT_NAME
-readonly PROG_VERSION="1.0"
+readonly PROG_VERSION="1.1"
 
 # =============================================================================
 # 1. VALEURS PAR DÉFAUT (surchargées par arguments)
@@ -303,6 +319,20 @@ detect_template_os() {
 preflight() {
     [[ $EUID -eq 0 ]] || die_user "Ce script doit être exécuté en root."
 
+    # --- Validation format des arguments numériques ---
+    [[ "$VMID"   =~ ^[0-9]+$ ]] || die_usage "--id doit être un entier (reçu : '$VMID')"
+    [[ "$CORES"  =~ ^[0-9]+$ ]] || die_usage "--cores doit être un entier (reçu : '$CORES')"
+    [[ "$MEMORY" =~ ^[0-9]+$ ]] || die_usage "--memory doit être un entier (reçu : '$MEMORY')"
+    [[ "$SWAP"   =~ ^[0-9]+$ ]] || die_usage "--swap doit être un entier (reçu : '$SWAP')"
+    [[ "$DISK"   =~ ^[0-9]+$ ]] || die_usage "--disk doit être un entier (reçu : '$DISK')"
+
+    # --- Validation des plages ---
+    (( VMID   >= 100        && VMID   <= 999999999 )) || die_usage "--id hors plage (100-999999999)"
+    (( CORES  >= 1          && CORES  <= 128       )) || die_usage "--cores hors plage (1-128)"
+    (( MEMORY >= 16         && MEMORY <= 1048576   )) || die_usage "--memory hors plage (16-1048576 MiB)"
+    (( SWAP   >= 0          && SWAP   <= 1048576   )) || die_usage "--swap hors plage (0-1048576 MiB)"
+    (( DISK   >= 1          && DISK   <= 10240     )) || die_usage "--disk hors plage (1-10240 Go)"
+
     command -v pct >/dev/null 2>&1 || die_env "pct introuvable — hôte Proxmox ?"
     command -v pveam >/dev/null 2>&1 || die_env "pveam introuvable — hôte Proxmox ?"
     command -v pvesm >/dev/null 2>&1 || die_env "pvesm introuvable — hôte Proxmox ?"
@@ -348,10 +378,6 @@ preflight() {
         fi
     fi
 }
-
-
-
-
 
 
 # =============================================================================
@@ -550,12 +576,21 @@ cleanup_on_error() {
 
     if [[ "$TEMPLATE_CREATED" == 'yes' ]]; then
         log_warn "Template $VMID déjà créé — non détruit (nettoyage manuel si besoin)."
-    elif [[ "$CONTAINER_CREATED" == 'yes' ]] && pct status "$VMID" &>/dev/null; then
-        log_warn "Destruction du conteneur partiel $VMID"
-        pct stop    "$VMID" --skiplock 1 &>/dev/null || true
-        pct destroy "$VMID" --purge 1 --force 1 &>/dev/null || true
+    elif [[ "$CONTAINER_CREATED" == 'yes' ]]; then
+        # Sécurité : démonter le rootfs s'il est encore monté (pct mount partiel)
+        if mountpoint -q "/var/lib/lxc/$VMID/rootfs" 2>/dev/null; then
+            log_warn "Démontage du rootfs orphelin de $VMID"
+            pct unmount "$VMID" &>/dev/null \
+                || umount "/var/lib/lxc/$VMID/rootfs" &>/dev/null \
+                || true
+        fi
+        if pct status "$VMID" &>/dev/null; then
+            log_warn "Destruction du conteneur partiel $VMID"
+            pct stop    "$VMID" --skiplock 1 &>/dev/null || true
+            pct destroy "$VMID" --purge 1 --force 1 &>/dev/null || true
+        fi
     fi
-
+#
     if [[ -n "$UDEV_RULE_FILE" && -f "$UDEV_RULE_FILE" ]]; then
         log_warn "Suppression de la règle udev $UDEV_RULE_FILE"
         rm -f "$UDEV_RULE_FILE"
@@ -582,7 +617,7 @@ ${C_BOLD}═══════════════════════�
   Disque      : ${DISK} Go sur ${STORAGE}
   Réseau      : ${BRIDGE}, ip=${IP}$( [[ -n "$GW" ]] && echo ", gw=$GW" )
   Nameserver  : ${NAMESERVER}
-  Searchdomain: $( [[ -z "$SEARCHDOMAIN" ]] && echo '(vide — correct)' || echo "$SEARCHDOMAIN" )
+  Searchdomain: (non défini — anomalie Proxmox §15.1)
   Features    : ${FEATURES}
   Template    : $([[ "$TEMPLATE_CREATED" == 'yes' ]] && echo 'oui' || echo 'NON')
   Machine-id  : $([[ "$RESET_MACHINE_ID" == 'yes' ]] && echo 'reset (0 octet, régénération au clone)' || echo 'NON reset — ATTENTION clones impurs')
@@ -606,7 +641,12 @@ EOF
 
 main() {
     log_info "=== ${SCRIPT_NAME} v${PROG_VERSION} — création template LXC ${VMID} ==="
-
+    
+    # --- Avertissement searchdomain (anomalie Proxmox §15.1) ---
+    if [[ -n "$SEARCHDOMAIN" ]]; then
+        log_warn "--searchdomain '$SEARCHDOMAIN' IGNORÉ (anomalie Proxmox §15.1 — non transmis à pct create)"
+    fi
+    
     preflight
 
     # --- Détection GPU (avant pct create pour échouer tôt si --gpu) ---
@@ -618,32 +658,51 @@ main() {
             fi
             log_warn "Aucun GPU détecté — template créé SANS passthrough GPU."
             GPU_ENABLE='no'
-            GPU_SUMMARY='aucun (pas de GPU détecté sur l hôte)'
+            GPU_SUMMARY="aucun (pas de GPU détecté sur l'hôte)"
         else
             log_ok "GPU détecté : ${GPU_SUMMARY}"
-			GPU_ENABLE='yes'   # auto → yes après détection réussie
+            GPU_ENABLE='yes'   # auto → yes après détection réussie
         fi
     fi
 
-    # --- DRY-RUN : afficher et sortir ---
+    # --- Tags : retirer gpu/igpu si pas de passthrough ---
+    if [[ "$GPU_ENABLE" == 'no' ]]; then
+        local -a tag_arr
+        IFS=',' read -ra tag_arr <<< "$TAGS"
+        TAGS=""
+        for t in "${tag_arr[@]}"; do
+            [[ "$t" == "gpu" || "$t" == "igpu" ]] && continue
+            TAGS="${TAGS:+$TAGS,}$t"
+        done
+    fi
+
     if [[ "$DRY_RUN" == 'yes' ]]; then
         log_warn "MODE --dry-run : aucune modification effectuée"
-        cat <<EOF
-
-${C_BOLD}Actions qui seraient exécutées :${C_OFF}
-  1. pct create ${VMID} ${TEMPLATE_OS} \\
+        local -a actions=()
+        actions+=("pct create ${VMID} ${TEMPLATE_OS} \\
        --hostname ${HOSTNAME} --unprivileged 1 --features ${FEATURES} \\
        --cores ${CORES} --memory ${MEMORY} --swap ${SWAP} \\
        --rootfs ${STORAGE}:${DISK} \\
-       --net0 name=eth0,bridge=${BRIDGE},ip=${IP}$( [[ -n "$GW" ]] && echo ",gw=${GW}" ),type=veth,firewall=${FIREWALL} \\
-       --nameserver ${NAMESERVER} --ostype debian --tags "${TAGS}" --start 0
-  2. Édition ${PROXMOX_LXC_CONF_PATH}/${VMID}.conf (cgroup2 + mount.entry GPU)
-  3. Création ${PROXMOX_UDEV_PATH}/99-lxc-gpu-${VMID}.rules + udevadm reload
-  4. $( [[ "$RESET_MACHINE_ID" == 'yes' ]] \
-         && echo "pct mount ${VMID} → reset machine-id + SSH → pct unmount" \
-         || echo "reset machine-id + SSH : IGNORÉ (--no-reset)" )
-  5. pct template ${VMID}
-EOF
+       --net0 name=eth0,bridge=${BRIDGE},ip=${IP}$( [[ -z "$GW" ]] || echo ",gw=${GW}" ),type=veth,firewall=${FIREWALL} \\
+       --nameserver ${NAMESERVER} --ostype debian --tags \"${TAGS}\" --start 0")
+        if [[ "$GPU_ENABLE" == 'yes' ]]; then
+            actions+=("Édition ${PROXMOX_LXC_CONF_PATH}/${VMID}.conf (cgroup2 + mount.entry GPU)")
+            actions+=("Création ${PROXMOX_UDEV_PATH}/99-lxc-gpu-${VMID}.rules + udevadm reload")
+        fi
+        if [[ "$RESET_MACHINE_ID" == 'yes' ]]; then
+            actions+=("pct mount ${VMID} → reset machine-id + SSH → pct unmount")
+        else
+            actions+=("reset machine-id + SSH : IGNORÉ (--no-reset)")
+        fi
+        actions+=("pct template ${VMID}")
+
+        echo
+        echo "${C_BOLD}Actions qui seraient exécutées :${C_OFF}"
+        local i=1
+        for a in "${actions[@]}"; do
+            printf '  %d. %s\n' "$i" "$a"
+            ((i++)) || true
+        done
         return 0
     fi
 
@@ -670,15 +729,20 @@ EOF
         --description  "Template LXC cree par ${SCRIPT_NAME} le $(date +%F)"
         --start        0
     )
-    # NOTE : on ne passe PAS --searchdomain (cf. anomalie §15.1 doc master,
-    #        pct peut injecter le DNS dans ce champ par confusion).
-    # NOTE : on ne passe PAS --password (template sans mot de passe root ;
-    #        accès via `pct enter`, ou --root-password pour opt-in).
-    [[ "$ROOT_PASSWORD" == 'ask' ]] && create_cmd+=(--password)
 
     log_info "Commande : ${create_cmd[*]}"
-    if ! run_step "pct create $VMID" "${create_cmd[@]}"; then
-        die_create "pct create a échoué (voir contexte ci-dessus)."
+
+    if [[ "$ROOT_PASSWORD" == 'ask' ]]; then
+        # Mode interactif : run_step capture stdout/stderr → prompt invisible.
+        # On exécute directement pour que le prompt s'affiche sur le tty.
+        create_cmd+=(--password)
+        if ! "${create_cmd[@]}"; then
+            die_create "pct create a échoué (mode interactif)."
+        fi
+    else
+        if ! run_step "pct create $VMID" "${create_cmd[@]}"; then
+            die_create "pct create a échoué (voir contexte ci-dessus)."
+        fi
     fi
     CONTAINER_CREATED='yes'
     log_ok "Conteneur $VMID créé (non démarré)"
