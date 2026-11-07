@@ -1,14 +1,10 @@
-# Création automatisée d'un template LXC Proxmox avec passthrough GPU (iGPU AMD / carte dédiée) (AMD only, Intel/NVIDIA envisagés ...)
-
-
+# Création automatisée d'un template LXC Proxmox avec passthrough GPU (iGPU AMD / carte dédiée) (AMD only pour l'instant, Intel/NVIDIA envisagés ... )
 
 Date : 07 novembre 2026
 
 OS : proxmox 9.2
 
-Autheur : Yannick SUDRIE
-
-
+Auteur : Yannick SUDRIE
 
 ## 📋 Table des matières
 
@@ -38,6 +34,8 @@ Autheur : Yannick SUDRIE
 
 - Documentation associée
 
+- Roadmap (non contractuelle)
+
 - Contribution
 
 - Licence
@@ -49,9 +47,9 @@ Autheur : Yannick SUDRIE
 Ce script Bash automatise la création d'un **conteneur LXC non privilégié** sur Proxmox VE, configuré avec le **passthrough GPU** (iGPU AMD Radeon ou carte dédiée) via `cgroup2` et bind mounts, puis converti en **template golden image** prêt à être cloné.
 
 Compatibilité actuelle : AMD iGPU/dGPU uniquement (testé sur Ryzen 7 5700U, iGPU Radeon Lucienne/Renoir).
-Envisagé (sans engagement) : Intel iGPU/Arc (architecture proche d'AMD, ajout probablement simple) et NVIDIA (architecture différente — devices /dev/nvidia*, userspace driver à synchroniser — pourrait passer par une VM plutôt qu'un LXC).
+**Envisagé (sans engagement)** : Intel iGPU/Arc (architecture proche d'AMD, ajout probablement simple) et NVIDIA (architecture différente — devices `/dev/nvidia*`, userspace driver à synchroniser — pourrait passer par une VM plutôt qu'un LXC). Voir [Roadmap](#️-roadmap-non-contractuelle).
 
-Il résout les problèmes récurrents rencontrés lors de la configuration manuelle :
+### Problèmes résolus
 
 | Problème                                          | Solution apportée                                              |
 | ------------------------------------------------- | -------------------------------------------------------------- |
@@ -61,6 +59,7 @@ Il résout les problèmes récurrents rencontrés lors de la configuration manue
 | Clés SSH dupliquées (faille de sécurité)          | Suppression automatique avant templatisation                   |
 | Search domain pollué (anomalie Proxmox)           | Paramètre `--searchdomain` jamais transmis                     |
 | Warning systemd 257                               | `features: nesting=1` activé par défaut                        |
+| Clones CPU-only mal taggés                        | Tags `gpu,igpu` retirés automatiquement en mode `--no-gpu`     |
 
 > ⚠️ **Ce script ne fait PAS** (volontairement) :
 > 
@@ -70,9 +69,9 @@ Il résout les problèmes récurrents rencontrés lors de la configuration manue
 > 
 > - Sauvegarde `vzdump`
 > 
-> - Configuration DHCP statique côté pfSense ou autre (A faire à la mano)
+> - Configuration DHCP statique côté pfSense ou autre (à faire à la main)
 > 
-> - Supprimer les rules associées au template  ( note : A faire plus tard via un script de netoyage car suite à un `pct destroy 666`, le fichier` 99-lxc-gpu-666.rules` restera orphelin. Le trap actuel ne le supprime qu'en cas d'échec, pas en cas de succès (c'est correct — sur succès, le template existe). Il faudra un futur LXC_DESTROY_TEMPLATE.sh qui fasse le ménage (destroy + rm rule)).
+> - Suppression des règles udev après `pct destroy` (orphelinage volontaire — voir [Roadmap](#️-roadmap-non-contractuelle) pour un futur `LXC_DESTROY_TEMPLATE.sh`)
 > 
 > Ces étapes sont documentées dans des guides dédiés (voir Documentation associée).
 
@@ -96,15 +95,17 @@ Il résout les problèmes récurrents rencontrés lors de la configuration manue
 
 - ✅ **Nesting activé** pour systemd 257+
 
+- ✅ **Conteneurs CPU-only supportés** (`--no-gpu`, ou auto-fallback si aucun GPU détecté)
+
 - ✅ **Mode `--dry-run`** pour prévisualiser les actions
 
-- ✅ **Trap de nettoyage** en cas d'échec (rollback partiel)
+- ✅ **Trap de nettoyage** en cas d'échec (rollback partiel, unmount sécurisé)
 
 - ✅ **Codes de sortie nominaux** pour diagnostic précis
 
-- ✅ **Logs colorés** avec contexte en cas d'erreur
+- ✅ **Validation stricte** des arguments numériques (format + plages)
 
-- ✅ **Conteneurs CPU-only** supportés (`--no-gpu`, ou auto-fallback si aucun GPU détecté)
+- ✅ **Logs colorés** avec contexte en cas d'erreur
 
 ---
 
@@ -136,37 +137,22 @@ Il résout les problèmes récurrents rencontrés lors de la configuration manue
 
 ### Vérifications préalables
 
-bash
-
-# 1. Pilote amdgpu chargé ?
-
 ```bash
+# 1. Pilote amdgpu chargé ?
 lspci -nnk | grep -A 3 -iE 'vga|3d|display'
 
 # Attendu : "Kernel driver in use: amdgpu"
-```
 
 # 2. Nœuds GPU présents ?
-
-```bash
 ls -l /dev/dri /dev/kfd
-```
 
 # 3. Groupes render/video existants ?
-
-```bash
 getent group render video
-```
 
 # 4. Template Debian 13 disponible ?
-
-```bash
 pveam list local | grep debian-13
-```
 
 # 5. Storage rootfs disponible ?
-
-```bash
 pvesm status
 ```
 
@@ -176,27 +162,26 @@ pvesm status
 
 ### Méthode 1 — Téléchargement direct
 
-# Sur l'hôte Proxmox (en root)
-
 ```bash
+# Sur l'hôte Proxmox (en root)
 cd /root
-wget https://raw.githubusercontent.com/<votre-user>/<votre-repo>/main/LXC_TEMPLATE_GPU.sh
-chmod +x LXC_TEMPLATE_GPU.sh
+wget https://github.com/sudtek/Pot_Pourri_Tech/raw/refs/heads/main/Proxmox/LXC%20Template%20IGPU%20(AMD)/LXC_CREATE_TEMPLATE.sh
+chmod +x LXC_CREATE_TEMPLATE.sh
 ```
 
 ### Méthode 2 — Clone Git
 
 ```bash
 cd /root
-git clone https://github.com/<votre-user>/<votre-repo>.git lxc-template-gpu
+git clone https://github.com/sudtek/Pot_Pourri_Tech.git lxc-template-gpu
 cd lxc-template-gpu
-chmod +x LXC_TEMPLATE_GPU.sh
+chmod +x LXC_CREATE_TEMPLATE.sh
 ```
 
 ### Vérification
 
 ```bash
-./LXC_TEMPLATE_GPU.sh --help
+./LXC_CREATE_TEMPLATE.sh --help
 ```
 
 ---
@@ -206,63 +191,59 @@ chmod +x LXC_TEMPLATE_GPU.sh
 ### Syntaxe
 
 ```bash
-./LXC_TEMPLATE_GPU.sh [options]
+./LXC_CREATE_TEMPLATE.sh [options]
 ```
 
 ### Exécution minimale
 
 ```bash
 # Création avec les valeurs par défaut (ID 999, DHCP, GPU auto-détecté)
-
-./LXC_TEMPLATE_GPU.sh
+./LXC_CREATE_TEMPLATE.sh
 ```
 
 ### Exécution typique
 
 ```bash
 # Template maître avec hostname explicite
-
-./LXC_TEMPLATE_GPU.sh --id 999 --hostname master-r7-igpu
+./LXC_CREATE_TEMPLATE.sh --id 999 --hostname master-r7-igpu
 
 # Avec IP statique
-
-./LXC_TEMPLATE_GPU.sh --id 999 --hostname master-r7-igpu \
+./LXC_CREATE_TEMPLATE.sh --id 999 --hostname master-r7-igpu \
   --ip 10.10.10.140/24 --gw 10.10.10.254
 
 # Prévisualisation sans modification
-
-./LXC_TEMPLATE_GPU.sh --dry-run --gpu
+./LXC_CREATE_TEMPLATE.sh --dry-run --gpu
 ```
 
 ---
 
 ## ⚙️ Options
 
-| Option            | Argument     | Défaut                  | Description                                         |
-| ----------------- | ------------ | ----------------------- | --------------------------------------------------- |
-| `--id`            | `N`          | `999`                   | ID du conteneur                                     |
-| `--hostname`      | `NAME`       | `cont-<timestamp>`      | Hostname du conteneur                               |
-| `--storage`       | `STOR`       | `local-zfs`             | Storage rootfs                                      |
-| `--bridge`        | `BR`         | `vmbr0`                 | Bridge réseau                                       |
-| `--cores`         | `N`          | `2`                     | Nombre de cores                                     |
-| `--memory`        | `MiB`        | `2048`                  | RAM en MiB                                          |
-| `--swap`          | `MiB`        | `512`                   | Swap en MiB                                         |
-| `--disk`          | `SIZE`       | `10`                    | Taille disque en Go                                 |
-| `--nameserver`    | `IP`         | `10.10.10.254`          | DNS                                                 |
-| `--searchdomain`  | `DOM`        | *(vide)*                | Search domain (laisser vide — cf. anomalie Proxmox) |
-| `--ip`            | `CIDR\|dhcp` | `dhcp`                  | IP statique (ex. `10.10.10.140/24`) ou `dhcp`       |
-| `--gw`            | `IP`         | —                       | Gateway (**requis** si `--ip` statique)             |
-| `--tags`          | `LIST`       | `template,gpu,igpu,lxc` | Tags Proxmox (séparés par virgule)                  |
-| `--template-os`   | `VOLID`      | auto                    | Template OS (auto-détection Debian 13 si vide)      |
-| `--root-password` | —            | non                     | Demander interactivement un mot de passe root       |
-| `--gpu`           | —            | auto                    | Forcer l'activation du passthrough GPU              |
-| `--no-gpu`        | —            | —                       | Désactiver le passthrough GPU                       |
-| `--reset`         | —            | oui                     | Reset machine-id + SSH (défaut)                     |
-| `--no-reset`      | —            | —                       | ⚠️ Ne PAS reset (clones impurs — déconseillé)       |
-| `--force`         | —            | non                     | Écraser un conteneur existant avec le même ID       |
-| `--dry-run`       | —            | non                     | Afficher les actions sans les exécuter              |
-| `--debug`         | —            | non                     | Active `set -x` (trace de chaque commande)          |
-| `-h`, `--help`    | —            | —                       | Affiche l'aide                                      |
+| Option            | Argument     | Défaut                  | Description                                                                                                     |
+| ----------------- | ------------ | ----------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `--id`            | `N`          | `999`                   | ID du conteneur (entier, 100-999999999)                                                                         |
+| `--hostname`      | `NAME`       | `cont-<timestamp>`      | Hostname du conteneur                                                                                           |
+| `--storage`       | `STOR`       | `local-zfs`             | Storage rootfs                                                                                                  |
+| `--bridge`        | `BR`         | `vmbr0`                 | Bridge réseau                                                                                                   |
+| `--cores`         | `N`          | `2`                     | Nombre de cores (1-128)                                                                                         |
+| `--memory`        | `MiB`        | `2048`                  | RAM en MiB (16-1048576)                                                                                         |
+| `--swap`          | `MiB`        | `512`                   | Swap en MiB (0-1048576)                                                                                         |
+| `--disk`          | `SIZE`       | `10`                    | Taille disque en Go (1-10240)                                                                                   |
+| `--nameserver`    | `IP`         | `10.10.10.254`          | DNS                                                                                                             |
+| `--searchdomain`  | `DOM`        | *(vide)*                | ⚠️ Accepté mais ignoré (anomalie Proxmox §15.1 — non transmis à pct create)                                     |
+| `--ip`            | `CIDR\|dhcp` | `dhcp`                  | IP statique (ex. `10.10.10.140/24`) ou `dhcp`                                                                   |
+| `--gw`            | `IP`         | —                       | Gateway (**requis** si `--ip` statique)                                                                         |
+| `--tags`          | `LIST`       | `template,gpu,igpu,lxc` | Tags Proxmox (séparés par virgule ; gpu/igpu retirés si --no-gpu)                                               |
+| `--template-os`   | `VOLID`      | auto                    | Template OS (auto-détection Debian 13 si vide)                                                                  |
+| `--root-password` | —            | non                     | Mode interactif : prompt visible sur le tty. Sans cette option : pas de mot de passe root (accès via pct enter) |
+| `--gpu`           | —            | auto                    | Forcer l'activation du passthrough GPU (échoue si aucun GPU détecté)                                            |
+| `--no-gpu`        | —            | —                       | Désactiver le passthrough GPU                                                                                   |
+| `--reset`         | —            | oui                     | Reset machine-id + SSH (défaut)                                                                                 |
+| `--no-reset`      | —            | —                       | ⚠️ Ne PAS reset (clones impurs — déconseillé)                                                                   |
+| `--force`         | —            | non                     | Écraser un conteneur existant avec le même ID                                                                   |
+| `--dry-run`       | —            | non                     | Afficher les actions sans les exécuter                                                                          |
+| `--debug`         | —            | non                     | Active `set -x` (trace de chaque commande)                                                                      |
+| `-h`, `--help`    | —            | —                       | Affiche l'aide                                                                                                  |
 
 ---
 
@@ -270,22 +251,25 @@ chmod +x LXC_TEMPLATE_GPU.sh
 
 ```text
 ┌──────────────────────────────────────────────────────────────────┐
-│  1. PREFLIGHT                                                     │
+│  1. PREFLIGHT                                                    │
 │     • Vérifie root, pct, pveam, pvesm, /etc/pve                  │
 │     • Valide storage, bridge, template OS                        │
+│     • Valide format et plages des args numériques                │
 │     • Vérifie que l'ID est libre (ou --force)                    │
 │     • Vérifie la cohérence réseau (IP statique → gw requis)      │
 ├──────────────────────────────────────────────────────────────────┤
-│  2. DÉTECTION GPU                                                 │
+│  2. DÉTECTION GPU                                                │
 │     • Lit /sys/class/drm/*/dev (major:minor décimaux)            │
 │     • Détecte cardN, renderDN, kfd                               │
 │     • Fallback sur ls -l si sysfs indisponible                   │
+│     • Mode auto → yes si GPU trouvé, no sinon                    │
 ├──────────────────────────────────────────────────────────────────┤
-│  3. CRÉATION DU CONTENEUR                                         │
+│  3. CRÉATION DU CONTENEUR                                        │
 │     • pct create <id> <template> --start 0                       │
 │     • Unprivileged, nesting=1, sans searchdomain                 │
+│     • Tags nettoyés si GPU désactivé                             │
 ├──────────────────────────────────────────────────────────────────┤
-│  4. CONFIG GPU                                                    │
+│  4. CONFIG GPU (si GPU activé)                                   │
 │     • Patch /etc/pve/lxc/<id>.conf :                             │
 │         - lxc.cgroup2.devices.allow: c 226:0 rwm                 │
 │         - lxc.cgroup2.devices.allow: c 226:128 rwm               │
@@ -293,16 +277,16 @@ chmod +x LXC_TEMPLATE_GPU.sh
 │         - lxc.mount.entry: /dev/dri/card0 ...                    │
 │         - lxc.mount.entry: /dev/dri/renderD128 ...               │
 │         - lxc.mount.entry: /dev/kfd ...                          │
-│     • Crée /etc/udev/rules.d/99-lxc-gpu-<id>.rules (MODE=0666)  │
+│     • Crée /etc/udev/rules.d/99-lxc-gpu-<id>.rules (MODE=0666)   │
 │     • udevadm control --reload-rules && udevadm trigger          │
 ├──────────────────────────────────────────────────────────────────┤
-│  5. RESET (via pct mount, SANS démarrer)                          │
+│  5. RESET (via pct mount, SANS démarrer)                         │
 │     • truncate /etc/machine-id → 0 octet                         │
 │     • ln -sfn /etc/machine-id /var/lib/dbus/machine-id           │
 │     • rm /etc/ssh/ssh_host_*                                     │
 │     • pct unmount <id>                                           │
 ├──────────────────────────────────────────────────────────────────┤
-│  6. TEMPLATISATION                                                │
+│  6. TEMPLATISATION                                               │
 │     • pct template <id>                                          │
 │     • Affichage du récapitulatif                                 │
 └──────────────────────────────────────────────────────────────────┘
@@ -315,7 +299,7 @@ chmod +x LXC_TEMPLATE_GPU.sh
 ### Création d'un template maître golden image
 
 ```bash
-./LXC_TEMPLATE_GPU.sh \
+./LXC_CREATE_TEMPLATE.sh \
   --id 999 \
   --hostname master-r7-igpu \
   --storage local-zfs \
@@ -329,7 +313,7 @@ chmod +x LXC_TEMPLATE_GPU.sh
 ### Création avec IP statique
 
 ```bash
-./LXC_TEMPLATE_GPU.sh \
+./LXC_CREATE_TEMPLATE.sh \
   --id 205 \
   --hostname test-gpu-r7 \
   --ip 10.10.10.150/24 \
@@ -340,67 +324,66 @@ chmod +x LXC_TEMPLATE_GPU.sh
 ### Mode dry-run (prévisualisation)
 
 ```bash
-./LXC_TEMPLATE_GPU.sh --dry-run --gpu --id 999
+./LXC_CREATE_TEMPLATE.sh --dry-run --gpu --id 999
 ```
 
 ### Sans GPU (conteneur CPU-only)
 
 ```bash
-./LXC_TEMPLATE_GPU.sh --no-gpu --id 300 --hostname cont-cpu
+./LXC_CREATE_TEMPLATE.sh --no-gpu --id 300 --hostname cont-cpu
 ```
 
 ### Avec mot de passe root interactif
 
 ```bash
-./LXC_TEMPLATE_GPU.sh --root-password --id 999
+./LXC_CREATE_TEMPLATE.sh --root-password --id 999
 ```
 
 ### Forcer l'écrasement d'un conteneur existant
 
 ```bash
-./LXC_TEMPLATE_GPU.sh --id 999 --force
+./LXC_CREATE_TEMPLATE.sh --id 999 --force
 ```
 
 ---
 
 ## 🔄 Workflow recommandé
 
-```textile
-┌─────────────────────────────────────────────────────────────┐
-│  1. Créer le template maître (ce script)                    │
-│     ./LXC_TEMPLATE_GPU.sh --id 999 --hostname master-r7-igpu│
-│                                                             │
-│  2. Vérifier la config                                      │
-│     pct config 999 | grep -E 'cgroup2|mount.entry|template' │
-│                                                             │
-│  3. Cloner (full clone)                                     │
-│     pct clone 999 201 --hostname llama-r7 --full            │
-│                                                             │
-│  4. Ajuster ressources + IP statique (post-clone)           │
-│     pct set 201 -cores 6 -memory 12288                      │
-│     pct set 201 --net0 name=eth0,bridge=vmbr0,\              │
-│         ip=10.10.10.140/24,gw=10.10.10.254,type=veth        │
-│                                                             │
-│  5. Ajouter bind mounts spécifiques (si besoin)             │
-│     pct set 201 -mp0 /rpool/models,mp=/opt/models,ro=1      │
-│                                                             │
-│  6. Démarrer et configurer le service                       │
-│     pct start 201 && pct enter 201                          │
-│                                                             │
-│  7. Sauvegarder le template maître                          │
-│     vzdump 999 --storage local --mode snapshot --compress zstd│
-└─────────────────────────────────────────────────────────────┘
+```text
+┌────────────────────────────────────────────────────────────────┐
+│  1. Créer le template maître (ce script)                       │
+│     ./LXC_CREATE_TEMPLATE.sh --id 999 --hostname master-r7-igpu│
+│                                                                │
+│  2. Vérifier la config                                         │
+│     pct config 999 | grep -E 'cgroup2|mount.entry|template'    │
+│                                                                │
+│  3. Cloner (full clone)                                        │
+│     pct clone 999 201 --hostname llama-r7 --full               │
+│                                                                │
+│  4. Ajuster ressources + IP statique (post-clone)              │
+│     pct set 201 -cores 6 -memory 12288                         │
+│     pct set 201 --net0 name=eth0,bridge=vmbr0,\                │
+│         ip=10.10.10.140/24,gw=10.10.10.254,type=veth           │
+│                                                                │
+│  5. Ajouter bind mounts spécifiques (si besoin)                │
+│     pct set 201 -mp0 /rpool/models,mp=/opt/models,ro=1         │
+│                                                                │
+│  6. Démarrer et configurer le service                          │
+│     pct start 201 && pct enter 201                             │
+│                                                                │
+│  7. Sauvegarder le template maître                             │
+│     vzdump 999 --storage local --mode snapshot --compress zstd │
+└────────────────────────────────────────────────────────────────┘
 ```
 
 ### Vérification post-clone
 
-# Dans le clone
-
 ```bash
+# Dans le clone
 hostname               # → hostname attendu
 cat /etc/machine-id    # → UUID généré (pas vide)
 ls /etc/ssh/ssh_host_* # → nouvelles clés régénérées
-ls -l /dev/dri/ /dev/kfd  # → GPU accessible
+ls -l /dev/dri/ /dev/kfd  # → GPU accessible (si le template avait GPU)
 ```
 
 > ⚠️ **Post-clone** : configurer le mappage DHCP statique dans pfSense, ou fixer l'IP statique via `pct set`.
@@ -446,10 +429,10 @@ udevadm control --reload-rules && udevadm trigger
 
 ```bash
 # Option 1 : utiliser un autre ID
-./LXC_TEMPLATE_GPU.sh --id 998
+./LXC_CREATE_TEMPLATE.sh --id 998
 
 # Option 2 : forcer l'écrasement (destructif !)
-./LXC_TEMPLATE_GPU.sh --id 999 --force
+./LXC_CREATE_TEMPLATE.sh --id 999 --force
 ```
 
 ### Erreur "Aucun template Debian 13"
@@ -461,7 +444,7 @@ pveam available --section system | grep debian-13
 pveam download local debian-13-standard_13.6-1_amd64.tar.zst
 
 # Ou spécifier manuellement
-./LXC_TEMPLATE_GPU.sh --template-os local:vztmpl/debian-13-standard_13.6-1_amd64.tar.zst
+./LXC_CREATE_TEMPLATE.sh --template-os local:vztmpl/debian-13-standard_13.6-1_amd64.tar.zst
 ```
 
 ### Vulkan ne détecte pas le GPU
@@ -485,10 +468,14 @@ pct set <id> -features nesting=1
 pct config <id> | grep features
 ```
 
+### Le prompt --root-password ne s'affiche pas
+
+Vérifiez que vous utilisez bien la v1.1+ — en v1.0, `run_step` capturait stdout/stderr et le `prompt Enter new password:` était invisible. En v1.1, l'exécution est directe (sans wrapper) pour afficher le prompt sur le tty.
+
 ### Debug approfondi
 
 ```bash
-./LXC_TEMPLATE_GPU.sh --debug --dry-run
+./LXC_CREATE_TEMPLATE.sh --debug --dry-run
 ```
 
 ---
@@ -528,31 +515,43 @@ Un fichier `/etc/machine-id` **vide (0 octet)** est le signal pour systemd de **
 
 ### Anomalie searchdomain Proxmox
 
-Lors de la création via formulaire web, Proxmox peut renseigner `searchdomain: 10.10.10.254` (confusion entre DNS server et search domain). Un search domain doit être un **nom de domaine** (`home.arpa`, `intranet.toto.net`) ou vide, jamais une IP. Le script ne passe **jamais** `--searchdomain` à `pct create`.
+Lors de la création via formulaire web, Proxmox peut renseigner `searchdomain: 10.10.10.254` (confusion entre DNS server et search domain). Un search domain doit être un **nom de domaine** (`home.arpa`, `intranet.toto.net`) ou vide, jamais une IP. 
+
+Le script accepte `--searchdomain` pour la compatibilité CLI, mais **ne le transmet jamais** à `pct create` — un `[WARN]` est émis si l'option est fournie.
+
+
+
+### Détection du template OS
+
+Le script utilise `pvesm status --content vztmpl` pour ne parcourir que les storages compatibles avec les templates, puis `pveam list <storage>` pour chercher un `debian-13.*standard`. Si plusieurs storages contiennent le template, le premier trouvé est utilisé.
 
 ---
 
 ## 📖 Documentation associée
 
-Ce script est le point d'entrée d'une série de guides :
+Ce script est le point d'entrée d'une série de guides à venir dans le dépôt :
+
+https://github.com/sudtek/Pot_Pourri_Tech/tree/main/Proxmox
 
 | Document                                 | Rôle                                                                                  |
 | ---------------------------------------- | ------------------------------------------------------------------------------------- |
 | **`INSTALL-LLAMA-CPP-LXC.md`**           | Workflow GPU + Vulkan + llama.cpp (détails du passthrough, compilation, performances) |
 | **`CONTAINER-MAITRE-VIERGE-R7-IGPU.md`** | Template golden image, reset machine-id/SSH, workflow de clone, bonnes pratiques      |
 
-Ces documents seront poussés dans le dépôt `docs` séparément.
-
 ---
 
 ## 🗺️ Roadmap (non contractuelle)
 
-| Vendor | Statut | Notes |
-|--------|--------|-------|
-| **AMD iGPU/dGPU** | ✅ Supporté (v1.0) | Testé sur Radeon Lucienne (Ryzen 7 5700U) |
-| **Intel iGPU/Arc** | 🔮 Envisagé | Modèle proche d'AMD (`/dev/dri` + Mesa), adapter probablement court |
-| **NVIDIA** | 🔮 Envisagé | Architecture différente (`/dev/nvidia*`, major dynamique pour `nvidia-uvm`, userspace driver à matcher avec l'hôte). La communauté recommande souvent une VM. |
-| **Sans GPU** | ✅ Supporté | Via `--no-gpu`, ou automatiquement si aucun `/dev/dri` détecté |
+| Vendor             | Statut            | Notes                                                                                                                                                         |
+| ------------------ | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **AMD iGPU/dGPU**  | ✅ Supporté (v1.1) | Testé sur Radeon Lucienne (Ryzen 7 5700U)                                                                                                                     |
+| **Intel iGPU/Arc** | 🔮 Envisagé       | Modèle proche d'AMD (`/dev/dri` + Mesa), adapter probablement court                                                                                           |
+| **NVIDIA**         | 🔮 Envisagé       | Architecture différente (`/dev/nvidia*`, major dynamique pour `nvidia-uvm`, userspace driver à matcher avec l'hôte). La communauté recommande souvent une VM. |
+| **Sans GPU**       | ✅ Supporté        | Via `--no-gpu`, ou automatiquement si aucun `/dev/dri` détecté                                                                                                |
+
+### Futur script `LXC_DESTROY_TEMPLATE.sh`
+
+Suite à un `pct destroy <id>`, le fichier `/etc/udev/rules.d/99-lxc-gpu-<id>.rules` reste orphelin. Le trap actuel ne le supprime qu'en cas d'échec, pas en cas de succès (c'est correct — sur succès, le template existe). Un futur script dédié fera le ménage complet : `destroy` + `rm rule` + `udevadm reload`.
 
 Les contributions d'adapters Intel ou NVIDIA sont bienvenues (voir [Contribution](#-contribution)).
 
@@ -576,9 +575,13 @@ Les contributions sont les bienvenues ! Pour proposer une amélioration :
 
 - Option `--gpu-pci <PCI>` pour forcer un GPU spécifique (multi-GPU)
 
-- Option `--verbose` / `-v`
+- Option `--verbose` / `-v` (déjà prévue dans le code, non implémentée)
 
-- Support des cartes NVIDIA (nouveau backend `nvidia-container-toolkit`)
+- Adapter Intel iGPU/Arc (quand matériel disponible)
+
+- Adapter NVIDIA (quand matériel disponible)
+
+- Script `LXC_DESTROY_TEMPLATE.sh` (voir Roadmap)
 
 - Tests automatisés (bats-core)
 
@@ -588,7 +591,7 @@ Les contributions sont les bienvenues ! Pour proposer une amélioration :
 
 ## 📄 Licence
 
-Ce projet est distribué sous licence **MIT**. Voir le fichier [`LICENSE`](https://license/) pour plus de détails.
+Ce projet est distribué sous licence **MIT**.
 
 ---
 
@@ -606,4 +609,4 @@ Les auteurs ne sauraient être tenus responsables de tout dommage résultant de 
 
 ---
 
-*Dernière mise à jour : 23 octobre 2026 — Version 1.0*
+*Dernière mise à jour : 07 novembre 2026 — Version 1.1*
